@@ -12,25 +12,31 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+enum UserRole {
+  ADMIN
+  USER
 }
 
-model Experience {
-  id          Int      @id @default(autoincrement())
-  role        String
-  company     String
-  duration    String
-  description String
+model user {
+  id        String   @id @default(uuid())
+  role      UserRole @default(USER)
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  userProfiles userProfile[]
 }
-model Project {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String
-  url         String
-} 
+
+model userProfile {
+  id          String  @id @default(uuid())
+  userId      String  @unique
+  fullAddress String
+  lastName    String
+  firstName   String
+  phoneNumber String?
+  dateOfBirth String?
+  user        user    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 
