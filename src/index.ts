@@ -1,7 +1,7 @@
 import { app, BrowserWindow, } from "electron";
 import { join } from "node:path";
 import { prepareNext } from "sc-prepare-next";
-import { bootstrap } from './src/main';
+import { bootstrap } from './main';
  const PORT = 4444;
 
 async function createWindow(): Promise<void> {

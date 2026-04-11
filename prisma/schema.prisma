@@ -5,13 +5,13 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider     = "prisma-client-js"
+  moduleFormat = "cjs"
 }
 
 datasource db {
   provider = "postgresql"
 }
-
 
 enum UserRole {
   ADMIN
@@ -38,5 +38,3 @@ model userProfile {
   dateOfBirth String?
   user        user    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
-
-
