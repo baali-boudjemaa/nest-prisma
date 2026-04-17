@@ -2,6 +2,7 @@ import { app, BrowserWindow, } from "electron";
 import { join } from "node:path";
 import { prepareNext } from "sc-prepare-next";
 import { bootstrap } from './main';
+import 'dotenv/config';
  const PORT = 4444;
 
 async function createWindow(): Promise<void> {
