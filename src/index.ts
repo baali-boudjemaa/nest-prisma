@@ -1,9 +1,9 @@
-import { app, BrowserWindow, } from "electron";
+import 'dotenv/config';
+import { app, BrowserWindow, ipcMain } from "electron";
 import { join } from "node:path";
 import { prepareNext } from "sc-prepare-next";
 import { bootstrap } from './main';
-import 'dotenv/config';
- const PORT = 4444;
+const PORT = 4444;
 
 async function createWindow(): Promise<void> {
   const win = new BrowserWindow({
@@ -23,6 +23,11 @@ async function createWindow(): Promise<void> {
   } else {
     await bootstrap();
     win.loadURL(`http://localhost:${PORT}/`);
+
+    win.webContents.on("console-message", (_event, level, message, line, sourceId) => {
+      console.log(`Renderer console [${level}] ${sourceId}:${line} - ${message}`);
+    });
+
     win.webContents.openDevTools();
   }
 }
@@ -38,7 +43,31 @@ async function createWindow(): Promise<void> {
 app.whenReady().then(async () => {
   await prepareNext("./src", PORT);
 
+  ipcMain.handle("add-user", async (_event, payload) => {
+    try {
+      const response = await fetch("http://localhost:3002/user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
+      if (!response.ok) {
+        return {
+          error: true,
+          status: response.status,
+          message: await response.text(),
+        };
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("IPC add-user error:", error);
+      return {
+        error: true,
+        message: error instanceof Error ? error.message : String(error),
+      };
+    }
+  });
 
   createWindow();
 
