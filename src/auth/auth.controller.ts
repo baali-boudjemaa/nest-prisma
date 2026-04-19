@@ -14,27 +14,27 @@ export class AuthController {
   async signup(@Body() createAuthDto: signupDto) {
     return await this.authService.signUp(createAuthDto);
   }
-  
+
   @Public()
-@Post('/signin')
-async login(
-  @Body() createAuthDto: signInDto,
-  @Res({ passthrough: true }) response: Response,
-) {
-  const { token, user } = await this.authService.signIn(createAuthDto);
+  @Post('/signin')
+  async login(
+    @Body() createAuthDto: signInDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const { token, user } = await this.authService.signIn(createAuthDto);
 
-  response.cookie('token', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 1000,
-    path: '/',
-  });
+    response.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 1000,
+      domain: process.env.NODE_ENV === 'production' ? 'yourdomain.com' : 'localhost',
+    });
 
-  return { user };
-}
+    return { user, token };
+  }
 
- 
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.userService.findOne(+id);
