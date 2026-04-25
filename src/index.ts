@@ -9,8 +9,9 @@ async function createWindow(): Promise<void> {
   const win = new BrowserWindow({
     title: "SC - Electron and Next",
     icon: "./build/icon.png",
-    width: 900,
-    height: 700,
+    //i want to set fullscreen
+    width: 1200,
+    height:   800,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
