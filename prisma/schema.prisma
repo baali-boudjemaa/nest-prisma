@@ -13,28 +13,131 @@ datasource db {
   provider = "postgresql"
 }
 
+
+
+
+// Enums
 enum UserRole {
   ADMIN
   USER
 }
 
-model user {
-  id        String   @id @default(uuid())
-  role      UserRole @default(USER)
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-
-  userProfiles userProfile[]
+enum Status {
+  PRESENT
+  ABSENT
+  EXCUSED
 }
 
-model userProfile {
-  id          String  @id @default(uuid())
-  userId      String  @unique
+// Models
+model User {
+  id          String   @id @default(uuid())
+  name        String
+  role        UserRole @default(USER)
+  email       String   @unique
+  password    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userProfile UserProfile?
+  createdLinks StudentGuardian[] @relation("UserCreatedLinks")
+}
+
+model UserProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
   fullAddress String
   lastName    String
   firstName   String
   phoneNumber String?
   dateOfBirth String?
-  user        user    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+model Student {
+  id             String          @id @default(uuid())
+  firstName      String
+  lastName       String
+  dateOfBirth    DateTime
+  gender         String?
+  medicalInfo    String? // Allergies, conditions, etc.
+  enrollmentDate DateTime        @default(now())
+
+  classId        String?
+  class          Classroom?      @relation(fields: [classId], references: [id])
+  guardians      StudentGuardian[]
+  attendance     Attendance[]
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Guardian {
+  id          String          @id @default(uuid())
+  firstName   String
+  lastName    String
+  phoneNumber String
+  email       String          @unique
+  address     String?
+
+  students    StudentGuardian[]
+
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model StudentGuardian {
+  studentId   String
+  guardianId  String
+  relationship String // e.g., "Mother", "Father", "Grandparent"
+  isEmergency Boolean         @default(false)
+  createdById String
+
+  student     Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  guardian    Guardian        @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  createdBy   User            @relation("UserCreatedLinks", fields: [createdById], references: [id])
+
+  @@id([studentId, guardianId])
+}
+
+model Teacher {
+  id             String          @id @default(uuid())
+  firstName      String
+  lastName       String
+  phoneNumber    String
+  email          String          @unique
+  certifications String? // e.g., "CPR, ECE"
+
+  classes        Classroom[]
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+model Classroom {
+  id            String        @id @default(uuid())
+  name          String // e.g., "Little Caterpillars"
+  ageGroup      String? // e.g., "3-4 years"
+  roomNumber    String?
+  maxCapacity   Int?
+
+  leadTeacherId String?
+  leadTeacher   Teacher?      @relation(fields: [leadTeacherId], references: [id])
+  students      Student[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Attendance {
+  id            String        @id @default(uuid())
+  date          DateTime      @default(now())
+  status        Status        @default(PRESENT)
+  checkInTime   DateTime?
+  checkOutTime  DateTime?
+
+  studentId     String
+  student       Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@unique([studentId, date])
 }
