@@ -15,15 +15,18 @@ import { jwtConstants } from './constants';
       global: true,
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '600000s' },
-    })
+    }),
   ],
   providers: [
     {
       provide: APP_GUARD,
       useClass: AuthGuard,
-    }, AuthService, PrismaService, UserService
+    },
+    AuthService,
+    PrismaService,
+    UserService,
   ],
   controllers: [AuthController],
-  exports: [AuthService, JwtModule,],
+  exports: [AuthService, JwtModule],
 })
-export class AuthModule { }
+export class AuthModule {}

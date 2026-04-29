@@ -17,5 +17,5 @@ export async function bootstrap() {
   await app.listen(process.env.PORT ?? 3002);
 }
 if (process.env.IS_NEXT === 'NO') {
-  // bootstrap();
+   bootstrap();
 }

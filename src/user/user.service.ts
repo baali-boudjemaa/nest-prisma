@@ -4,21 +4,21 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from '../prisma/prisma.service';
 @Injectable()
 export class UserService {
-  constructor(private prismaService: PrismaService) { }
+  constructor(private prismaService: PrismaService) {}
 
   async create(createUserDto: CreateUserDto) {
     const user = await this.prismaService.user.findUnique({
       where: {
-        email: createUserDto.email  
-      }
+        email: createUserDto.email,
+      },
     });
     if (user) {
       throw new Error('User already exists');
-    } 
-   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 
     return this.prismaService.user.create({
-      data: createUserDto
+      data: createUserDto,
     });
   }
 
@@ -29,8 +29,8 @@ export class UserService {
   findbyEmail(email: string) {
     return this.prismaService.user.findUnique({
       where: {
-        email: email
-      }
+        email: email,
+      },
     });
   }
   findOne(id: number) {

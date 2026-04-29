@@ -1,33 +1,38 @@
 import 'dotenv/config';
-import { app, BrowserWindow, ipcMain } from "electron";
-import { join } from "node:path";
-import { prepareNext } from "sc-prepare-next";
+import { app, BrowserWindow, ipcMain } from 'electron';
+import { join } from 'node:path';
+import { prepareNext } from 'sc-prepare-next';
 import { bootstrap } from './main';
 const PORT = 4444;
 
 async function createWindow(): Promise<void> {
   const win = new BrowserWindow({
-    title: "SC - Electron and Next",
-    icon: "./build/icon.png",
+    title: 'SC - Electron and Next',
+    icon: './build/icon.png',
     //i want to set fullscreen
     width: 1200,
-    height:   800,
+    height: 800,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: join(__dirname, "preload.js"),
+      preload: join(__dirname, 'preload.js'),
     },
   });
 
   if (app.isPackaged) {
-    win.loadFile(join(__dirname, "..", "..", "dist", "frontend", "index.html"));
+    win.loadFile(join(__dirname, '..', '..', 'dist', 'frontend', 'index.html'));
   } else {
     await bootstrap();
     win.loadURL(`http://localhost:${PORT}/`);
 
-    win.webContents.on("console-message", (_event, level, message, line, sourceId) => {
-      console.log(`Renderer console [${level}] ${sourceId}:${line} - ${message}`);
-    });
+    win.webContents.on(
+      'console-message',
+      (_event, level, message, line, sourceId) => {
+        console.log(
+          `Renderer console [${level}] ${sourceId}:${line} - ${message}`,
+        );
+      },
+    );
 
     win.webContents.openDevTools();
   }
@@ -42,13 +47,13 @@ async function createWindow(): Promise<void> {
  * @returns {Promise<void>} A Promise that resolves when all the setup is done.
  */
 app.whenReady().then(async () => {
-  await prepareNext("./src", PORT);
+  await prepareNext('./src', PORT);
 
-  ipcMain.handle("add-user", async (_event, payload) => {
+  ipcMain.handle('add-user', async (_event, payload) => {
     try {
-      const response = await fetch("http://localhost:3002/user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('http://localhost:3002/user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
@@ -62,7 +67,7 @@ app.whenReady().then(async () => {
 
       return await response.json();
     } catch (error) {
-      console.error("IPC add-user error:", error);
+      console.error('IPC add-user error:', error);
       return {
         error: true,
         message: error instanceof Error ? error.message : String(error),
@@ -72,14 +77,14 @@ app.whenReady().then(async () => {
 
   createWindow();
 
-  app.on("activate", () => {
+  app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
 
 /* ++++++++++ events ++++++++++ */
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
 });
 
 /* ++++++++++ code ++++++++++ */
