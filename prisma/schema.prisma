@@ -13,9 +13,6 @@ datasource db {
   provider = "postgresql"
 }
 
-
-
-
 // Enums
 enum UserRole {
   ADMIN
@@ -37,7 +34,7 @@ model User {
   password    String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
+ 
   userProfile UserProfile?
   createdLinks StudentGuardian[] @relation("UserCreatedLinks")
 }
@@ -52,6 +49,7 @@ model UserProfile {
   dateOfBirth String?
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
 model Student {
   id             String          @id @default(uuid())
   firstName      String
@@ -60,9 +58,15 @@ model Student {
   gender         String?
   medicalInfo    String? // Allergies, conditions, etc.
   enrollmentDate DateTime        @default(now())
-
+  payments       Payment[]
+  
   classId        String?
   class          Classroom?      @relation(fields: [classId], references: [id])
+  
+  // 🔥 NEW: Student linked to a specific care session block
+  sessionId      String?
+  session        Session?        @relation(fields: [sessionId], references: [id])
+  
   guardians      StudentGuardian[]
   attendance     Attendance[]
 
@@ -107,10 +111,12 @@ model Teacher {
   certifications String? // e.g., "CPR, ECE"
 
   classes        Classroom[]
+  seances        Seance[]        
 
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 }
+
 model Classroom {
   id            String        @id @default(uuid())
   name          String // e.g., "Little Caterpillars"
@@ -121,23 +127,94 @@ model Classroom {
   leadTeacherId String?
   leadTeacher   Teacher?      @relation(fields: [leadTeacherId], references: [id])
   students      Student[]
+  seances       Seance[]      
 
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
 
+// 🟢 NEW MODEL: Broad daycare care blocks (e.g., "Morning only")
+model Session {
+  id          String    @id @default(uuid())
+  name        String    // e.g., "Matinée", "Journée Complète", "Périscolaire"
+  startTime   String    // e.g., "07:30"
+  endTime     String    // e.g., "12:30"
+  
+  // To evaluate revenue or calculate billing by plan
+  basePrice   Decimal?  @db.Decimal(10, 2)
+
+  students    Student[] // Children enrolled specifically in this recurring timeframe
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// Fixed timeframe hourly events or subjects inside the classroom
+model Seance {
+  id            String        @id @default(uuid())
+  subject       String        // e.g., "Sieste", "Painting"
+  dayOfWeek     String        // e.g., "Monday", "Tuesday"
+  startTime     String        // e.g., "09:00"
+  endTime       String        // e.g., "10:30"
+
+  classroomId   String
+  classroom     Classroom     @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+
+  teacherId     String?       
+  teacher       Teacher?      @relation(fields: [teacherId], references: [id])
+
+  attendance    Attendance[]  
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@map("seance")
+}
+
 model Attendance {
   id            String        @id @default(uuid())
   date          DateTime      @default(now())
-  status        Status        @default(PRESENT)
+  status        Status        @default(PRESENT) 
   checkInTime   DateTime?
   checkOutTime  DateTime?
 
   studentId     String
   student       Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
+  seanceId      String?
+  seance        Seance?       @relation(fields: [seanceId], references: [id])
+
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  @@unique([studentId, date])
+  @@unique([studentId, date, seanceId]) 
+}
+
+model Payment {
+  id            String   @id @default(uuid()) 
+  paymentType   String   
+  monthPaid     String   
+  
+  amount        Decimal  @db.Decimal(10, 2)
+  paymentDate   DateTime @default(now())
+
+  studentId     String
+  student       Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+model Expense {
+  id              String   @id @default(uuid())
+  title           String   // e.g., "Art Supplies", "Electricity Bill"
+  category        String   // e.g., "Utilities", "Salaries", "Supplies"
+  amount          Decimal  @db.Decimal(10, 2)
+  expenseDate     DateTime @default(now())
+  
+  description     String?  // Optional details
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("expenses")
 }
