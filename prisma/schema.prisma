@@ -133,9 +133,15 @@ model Classroom {
   updatedAt     DateTime      @updatedAt
 }
 
+enum SessionName{
+  Matinée
+  Journée_Complète
+  Périscolaire
+}
 // 🟢 NEW MODEL: Broad daycare care blocks (e.g., "Morning only")
 model Session {
   id          String    @id @default(uuid())
+  sessionname SessionName
   name        String    // e.g., "Matinée", "Journée Complète", "Périscolaire"
   startTime   String    // e.g., "07:30"
   endTime     String    // e.g., "12:30"
@@ -217,4 +223,72 @@ model Expense {
   updatedAt       DateTime @updatedAt
 
   @@map("expenses")
+}
+
+// 🍎 1. Catalogue des ingrédients et état des stocks
+model Ingredient {
+  id              String         @id @default(uuid())
+  name            String         @unique // ex: "Lait", "Pommes de terre"
+  category        String         // ex: "Produits laitiers", "Légumes"
+  currentStock    Decimal        @default(0) @db.Decimal(10, 2)
+  unit            String         // ex: "kg", "litres", "pièces"
+  alertThreshold  Decimal        @default(5) @db.Decimal(10, 2) // Seuil d'alerte pour rachat
+
+  needs           KitchenNeed[]
+  purchaseItems   PurchaseItem[]
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@map("ingredients")
+}
+
+// 📝 2. Liste des besoins en cuisine pour préparer les repas
+model KitchenNeed {
+  id              String         @id @default(uuid())
+  quantityNeeded  Decimal        @db.Decimal(10, 2)
+  status          NeedStatus     @default(PENDING) // En attente, Acheté
+
+  ingredientId    String
+  ingredient      Ingredient     @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@map("kitchen_needs")
+}
+
+enum NeedStatus {
+  PENDING
+  PURCHASED
+}
+
+model KitchenPurchase {
+  id              String         @id @default(uuid())
+  supplier        String?        // Nom du magasin ou fournisseur
+  purchaseDate    DateTime       @default(now())
+  paymentType     String         // "Cash", "Card", "Transfer"
+  totalAmount     Decimal        @db.Decimal(10, 2) // Montant total de la facture
+
+  items           PurchaseItem[] // Détails des articles sur le ticket
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@map("kitchen_purchases")
+}
+
+
+model PurchaseItem {
+  id              String         @id @default(uuid())
+  quantity        Decimal        @db.Decimal(10, 2)
+  unitPrice       Decimal        @db.Decimal(10, 2) // Prix unitaire lors de cet achat
+
+  purchaseId      String
+  purchase        KitchenPurchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  ingredientId    String
+  ingredient      Ingredient     @relation(fields: [ingredientId], references: [id])
+
+  @@map("purchase_items")
 }
