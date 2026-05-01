@@ -15,7 +15,6 @@ export class UserService {
     if (user) {
       throw new Error('User already exists');
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 
     return this.prismaService.user.create({
       data: createUserDto,
