@@ -1,0 +1,64 @@
+name: Backend CI/CD Release
+
+on:
+  push:
+    branches:
+      - '**' # Triggers on a commit to any branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        # Assumes your nest/prisma app lives in a subfolder or root. 
+        # Remove or adjust this line if your standalone backend is at the absolute root of the repository.
+        working-directory: ./backend 
+
+    steps:
+      # Step 1: Check out your code repository
+      - name: Check out Repository
+        uses: actions/checkout@v4
+
+      # Step 2: Initialize Node.js environment
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: './backend/package-lock.json' # Points to your backend dependencies lock file
+
+      # Step 3: Install pristine dependencies from your lockfile
+      - name: Install Dependencies
+        run: npm ci
+
+      # Step 4: Generate Prisma Client artifacts and Engines
+      - name: Generate Prisma Client
+        env:
+          # Supabase connection string required to map data-type validations
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+        run: npx prisma generate --schema=prisma/schema.prisma
+
+      # Step 5: Safely push structural schema migrations up to your Supabase instance
+      - name: Run Prisma Database Migrations
+        env:
+          # Always use Supabase's Direct Connection Pooler string (Session Mode/Port 5432) for running migrations!
+          DATABASE_URL: ${{ secrets.DIRECT_URL }}
+        run: npx prisma migrate deploy
+
+      # Step 6: Compile NestJS TypeScript source down to production distribution files
+      - name: Build NestJS Application
+        run: npm run build
+
+      # Step 7: Bundle and archive output distribution code into a downloadable artifact
+      - name: Upload Production Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nestjs-backend-release
+          path: |
+            backend/dist
+            backend/package.json
+            backend/package-lock.json
+            backend/prisma
+          retention-days: 7
