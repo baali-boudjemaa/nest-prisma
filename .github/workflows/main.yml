@@ -11,8 +11,6 @@ jobs:
     
     defaults:
       run:
-        # Assumes your nest/prisma app lives in a subfolder or root. 
-        # Remove or adjust this line if your standalone backend is at the absolute root of the repository.
         working-directory: ./backend 
 
     steps:
@@ -26,7 +24,10 @@ jobs:
         with:
           node-version: 22
           cache: 'npm'
-          cache-dependency-path: './backend/package-lock.json' # Points to your backend dependencies lock file
+          # FIX: If your project is a monorepo and the backend is inside a folder named "backend",
+          # this path is correct. If your standalone repository ONLY contains the backend 
+          # at the absolute root, change this line to: cache-dependency-path: 'package-lock.json'
+          cache-dependency-path: './backend/package-lock.json'
 
       # Step 3: Install pristine dependencies from your lockfile
       - name: Install Dependencies
@@ -35,7 +36,6 @@ jobs:
       # Step 4: Generate Prisma Client artifacts and Engines
       - name: Generate Prisma Client
         env:
-          # Supabase connection string required to map data-type validations
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
         run: npx prisma generate --schema=prisma/schema.prisma
@@ -43,7 +43,6 @@ jobs:
       # Step 5: Safely push structural schema migrations up to your Supabase instance
       - name: Run Prisma Database Migrations
         env:
-          # Always use Supabase's Direct Connection Pooler string (Session Mode/Port 5432) for running migrations!
           DATABASE_URL: ${{ secrets.DIRECT_URL }}
         run: npx prisma migrate deploy
 
@@ -56,6 +55,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nestjs-backend-release
+          # FIX: Because this action evaluates paths from the absolute root, 
+          # ensure these match your actual folder structure.
           path: |
             backend/dist
             backend/package.json
