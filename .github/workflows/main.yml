@@ -62,4 +62,3 @@ jobs:
             backend/package.json
             backend/package-lock.json
             backend/prisma
-          retention-days: 7
