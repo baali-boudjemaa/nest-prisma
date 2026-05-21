@@ -14,13 +14,14 @@ import { TeacherModule } from './teacher/teacher.module';
 import { PaymentModule } from './payment/payment.module';
 const ENV = `.env.${process.env.NODE_ENV}`;
 console.log(ENV);
+const ENV_FILE_PATH = process.env.ENV_FILE_PATH ?? ENV;
 @Module({
   imports: [
     AuthModule,
     UserModule,
     ConfigModule.forRoot({
       // Dynamically picks .env.development or .env.production
-      envFilePath: `.env.${process.env.NODE_ENV}`,
+      envFilePath: ENV_FILE_PATH,
       isGlobal: true, // Makes variables available across all modules
     }),
     OverviewModule,

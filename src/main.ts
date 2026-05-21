@@ -4,10 +4,15 @@ import cookieParser from 'cookie-parser';
 import 'dotenv/config';
 import { AppModule } from './app.module';
 console.log(process.env.IS_NEXT);
+
+function normalizeOrigin(origin: string) {
+  return new URL(origin).origin;
+}
+
 export async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
-    origin: process.env.FRONTEND_URL ?? 'http://localhost:4444',
+    origin: normalizeOrigin(process.env.FRONTEND_URL ?? 'http://localhost:4444'),
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
