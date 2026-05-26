@@ -12,15 +12,13 @@ generator client {
   engineType   = "library"
 }
 
+datasource db {
+  provider = "postgresql"
+}
 
 // =======================
 // ENUMS
 // =======================
-
-enum UserRole {
-  ADMIN
-  USER
-}
 
 
 
@@ -106,6 +104,8 @@ model Employee {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  users User[]
 }
 
 // =======================
@@ -113,8 +113,8 @@ model Employee {
 // =======================
 
 model Student {
-  id             String @id @default(uuid())
-  studentNumber  String @unique
+  id            String @id @default(uuid())
+  studentNumber String @unique
 
   firstName      String
   lastName       String
@@ -123,12 +123,12 @@ model Student {
   medicalInfo    String?
   enrollmentDate DateTime @default(now())
 
-  guardians   StudentGuardian[]
+  guardians    StudentGuardian[]
   inscriptions Inscription[]
-  absences    Absence[]
-  attendance  Attendance[]
-  dailyLogs   DailyLog[]
-  milestones  StudentMilestone[]
+  absences     Absence[]
+  attendance   Attendance[]
+  dailyLogs    DailyLog[]
+  milestones   StudentMilestone[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -139,11 +139,11 @@ model Student {
 // =======================
 
 model Guardian {
-  id          String @id @default(uuid())
+  id          String  @id @default(uuid())
   firstName   String
   lastName    String
   phoneNumber String
-  email       String @unique
+  email       String  @unique
   relation    String
   address     String?
 
@@ -154,12 +154,12 @@ model Guardian {
 }
 
 model StudentGuardian {
-  id                    String @id @default(uuid())
-  studentId             String
-  guardianId            String
+  id         String @id @default(uuid())
+  studentId  String
+  guardianId String
 
-  isEmergencyContact    Boolean @default(false)
-  isAuthorizedToPickUp  Boolean @default(true)
+  isEmergencyContact   Boolean @default(false)
+  isAuthorizedToPickUp Boolean @default(true)
 
   student  Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   guardian Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
@@ -172,8 +172,8 @@ model StudentGuardian {
 // =======================
 
 model AnneeScolaire {
-  id               String @id @default(uuid())
-  libelleAnneesc   String @unique
+  id             String @id @default(uuid())
+  libelleAnneesc String @unique
 
   inscriptions Inscription[]
 
@@ -182,7 +182,7 @@ model AnneeScolaire {
 }
 
 model Classroom {
-  id       String @id @default(uuid())
+  id       String  @id @default(uuid())
   name     String
   ageGroup String?
   capacity Int
@@ -195,7 +195,7 @@ model Classroom {
 }
 
 model EmployeeClassroom {
-  id         String @id @default(uuid())
+  id         String  @id @default(uuid())
   employeeId String
   classId    String
   isLead     Boolean @default(false)
@@ -207,19 +207,19 @@ model EmployeeClassroom {
 }
 
 model Inscription {
-  id               String @id @default(uuid())
+  id String @id @default(uuid())
 
-  studentId        String
-  anneeScolaireId  String
-  classId          String
+  studentId       String
+  anneeScolaireId String
+  classId         String
 
-  session          SessionName @default(JOURNEE_COMPLETE)
+  session SessionName @default(JOURNEE_COMPLETE)
 
-  dateInscription  DateTime @default(now())
+  dateInscription DateTime @default(now())
 
-  student        Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  anneeScolaire  AnneeScolaire @relation(fields: [anneeScolaireId], references: [id], onDelete: Cascade)
-  classroom      Classroom     @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student       Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  anneeScolaire AnneeScolaire @relation(fields: [anneeScolaireId], references: [id], onDelete: Cascade)
+  classroom     Classroom     @relation(fields: [classId], references: [id], onDelete: Cascade)
 
   payments Payment[]
 }
@@ -229,12 +229,12 @@ model Inscription {
 // =======================
 
 model Attendance {
-  id           String @id @default(uuid())
+  id String @id @default(uuid())
 
-  studentId    String
-  date         DateTime
+  studentId String
+  date      DateTime
 
-  status       AttendanceStatus @default(PRESENT)
+  status AttendanceStatus @default(PRESENT)
 
   checkInTime  DateTime?
   checkOutTime DateTime?
@@ -251,8 +251,8 @@ model Absence {
   id        String @id @default(uuid())
   studentId String
 
-  dateAbsc  DateTime
-  motif     String?
+  dateAbsc DateTime
+  motif    String?
 
   student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
@@ -264,15 +264,15 @@ model Absence {
 // =======================
 
 model DailyLog {
-  id         String @id @default(uuid())
+  id String @id @default(uuid())
 
   studentId  String
   employeeId String
 
-  type       LogType
-  timestamp  DateTime @default(now())
+  type      LogType
+  timestamp DateTime @default(now())
 
-  notes      String
+  notes String
 
   student  Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
@@ -293,12 +293,12 @@ model Milestone {
 }
 
 model StudentMilestone {
-  id          String @id @default(uuid())
+  id String @id @default(uuid())
 
   studentId   String
   milestoneId String
 
-  status      MilestoneStatus @default(NOT_STARTED)
+  status MilestoneStatus @default(NOT_STARTED)
 
   student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
   milestone Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
@@ -313,7 +313,7 @@ model StudentMilestone {
 // =======================
 
 model SessionPricing {
-  id         String @id @default(uuid())
+  id String @id @default(uuid())
 
   session    SessionName @unique
   monthlyFee Float
@@ -323,15 +323,15 @@ model SessionPricing {
 }
 
 model Payment {
-  id            String @id @default(uuid())
+  id String @id @default(uuid())
 
   inscriptionId String
 
   amount        Float
   paymentMethod PaymentType @default(CASH)
 
-  datePay       DateTime @default(now())
-  label         String
+  datePay DateTime @default(now())
+  label   String
 
   inscription Inscription @relation(fields: [inscriptionId], references: [id], onDelete: Cascade)
 
@@ -340,12 +340,12 @@ model Payment {
 }
 
 model Expense {
-  id          String @id @default(uuid())
+  id String @id @default(uuid())
 
-  title       String
-  category    ExpenseCategory
+  title    String
+  category ExpenseCategory
 
-  amount      Float
+  amount Float
 
   expenseDate DateTime @default(now())
 
@@ -360,13 +360,13 @@ model Expense {
 // =======================
 
 model Ingredient {
-  id             String @id @default(uuid())
+  id String @id @default(uuid())
 
-  name           String @unique
-  category       String
+  name     String @unique
+  category String
 
-  currentStock   Float @default(0)
-  unit           String
+  currentStock Float  @default(0)
+  unit         String
 
   alertThreshold Float @default(5)
 
@@ -378,13 +378,13 @@ model Ingredient {
 }
 
 model KitchenNeed {
-  id             String @id @default(uuid())
+  id String @id @default(uuid())
 
   quantityNeeded Float
 
-  status         NeedStatus @default(PENDING)
+  status NeedStatus @default(PENDING)
 
-  ingredientId   String
+  ingredientId String
 
   ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
 
@@ -393,13 +393,13 @@ model KitchenNeed {
 }
 
 model KitchenPurchase {
-  id           String @id @default(uuid())
+  id String @id @default(uuid())
 
   supplier     String?
   purchaseDate DateTime @default(now())
 
-  paymentType  PaymentType
-  totalAmount  Float
+  paymentType PaymentType
+  totalAmount Float
 
   items PurchaseItem[]
 
@@ -421,18 +421,23 @@ model PurchaseItem {
 
   createdAt DateTime @default(now())
 }
+
 model User {
   id        String   @id @default(uuid())
-  name      String
-  role      UserRole @default(USER)
   email     String   @unique
   password  String
+
+  role      UserRole @default(TEACHER)
+
+  employeeId String?   @unique
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  userProfile  UserProfile?
-  createdLinks StudentGuardian[] @relation("UserCreatedLinks")
+  userProfiles UserProfile[]
 }
+
 model UserProfile {
   id          String  @id @default(uuid())
   userId      String  @unique
@@ -442,4 +447,11 @@ model UserProfile {
   phoneNumber String?
   dateOfBirth String?
   user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+enum UserRole {
+  ADMIN
+  TEACHER
+  ASSISTANT
+  KITCHEN
+  CLEANER
 }
