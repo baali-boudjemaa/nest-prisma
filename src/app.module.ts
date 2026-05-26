@@ -10,7 +10,7 @@ import { OverviewController } from './overview/overview.controller';
 import { OverviewModule } from './overview/overview.module';
 import { StudentModule } from './student/student.module';
 import { ClassModule } from './classroom/class.module';
-import { TeacherModule } from './teacher/teacher.module';
+import { TeacherModule } from './employee/teacher.module';
 import { PaymentModule } from './payment/payment.module';
 const ENV = `.env.${process.env.NODE_ENV}`;
 console.log(ENV);

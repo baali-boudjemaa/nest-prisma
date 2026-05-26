@@ -15,8 +15,10 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+// =======================
+// ENUMS
+// =======================
 
-// Enums
 enum UserRole {
   ADMIN
   USER
@@ -28,61 +30,113 @@ enum Status {
   EXCUSED
 }
 
-// Models
-model User {
-  id        String   @id @default(uuid())
-  name      String
-  role      UserRole @default(USER)
-  email     String   @unique
-  password  String
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum EmployeeRole {
+  TEACHER
+  ASSISTANT
+  KITCHEN
+  CLEANER
+  ADMIN
+}
+
+enum PaymentType {
+  CASH
+  CARD
+  TRANSFER
+}
+
+enum ExpenseCategory {
+  SALARY
+  UTILITIES
+  FOOD
+  SUPPLIES
+  MAINTENANCE
+  OTHER
+}
+
+enum SessionName {
+  Matinee
+  JourneeComplete
+  Periscolaire
+}
+
+enum NeedStatus {
+  PENDING
+  PURCHASED
+}
+
+// =======================
+// EMPLOYEE
+// Replaces Teacher
+// =======================
+
+model Employee {
+  id             String @id @default(uuid())
+  employeeNumber String @unique
+
+  firstName      String
+  lastName       String
+  phoneNumber    String
+  email          String @unique
+
+  role           EmployeeRole
+  certifications String?
+
+  classrooms Classroom[]
+  seances    Seance[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  userProfile  UserProfile?
-  createdLinks StudentGuardian[] @relation("UserCreatedLinks")
 }
 
-model UserProfile {
-  id          String  @id @default(uuid())
-  userId      String  @unique
-  fullAddress String
-  lastName    String
-  firstName   String
-  phoneNumber String?
-  dateOfBirth String?
-  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
+// =======================
+// STUDENT
+// =======================
 
 model Student {
-  id             String    @id @default(uuid())
+  id            String @id @default(uuid())
+  studentNumber String @unique
+
   firstName      String
   lastName       String
   dateOfBirth    DateTime
-  gender         String?
-  medicalInfo    String? // Allergies, conditions, etc.
-  enrollmentDate DateTime  @default(now())
-  payments       Payment[]
+  gender         Gender?
+  medicalInfo    String?
+  enrollmentDate DateTime @default(now())
 
   classId String?
   class   Classroom? @relation(fields: [classId], references: [id])
 
-  // 🔥 NEW: Student linked to a specific care session block
   sessionId String?
   session   Session? @relation(fields: [sessionId], references: [id])
 
   guardians  StudentGuardian[]
   attendance Attendance[]
+  payments   Payment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([classId])
+  @@index([sessionId])
 }
 
+// =======================
+// GUARDIAN
+// =======================
+
 model Guardian {
-  id          String  @id @default(uuid())
+  id             String @id @default(uuid())
+  guardianNumber String @unique
+
   firstName   String
   lastName    String
   phoneNumber String
-  email       String  @unique
+  email       String @unique
   address     String?
 
   students StudentGuardian[]
@@ -91,87 +145,68 @@ model Guardian {
   updatedAt DateTime @updatedAt
 }
 
-model StudentGuardian {
-  studentId    String
-  guardianId   String
-  relationship String // e.g., "Mother", "Father", "Grandparent"
-  isEmergency  Boolean @default(false)
-  createdById  String
-
-  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  guardian  Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
-  createdBy User     @relation("UserCreatedLinks", fields: [createdById], references: [id])
-
-  @@id([studentId, guardianId])
-}
-
-model Teacher {
-  id             String  @id @default(uuid())
-  firstName      String
-  lastName       String
-  phoneNumber    String
-  email          String  @unique
-  certifications String? // e.g., "CPR, ECE"
-
-  classes Classroom[]
-  seances Seance[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+// =======================
+// CLASSROOM
+// =======================
 
 model Classroom {
-  id          String  @id @default(uuid())
-  name        String // e.g., "Little Caterpillars"
-  ageGroup    String? // e.g., "3-4 years"
+  id          String @id @default(uuid())
+  classNumber String @unique
+
+  name        String
+  ageGroup    String?
   roomNumber  String?
   maxCapacity Int?
 
-  leadTeacherId String?
-  leadTeacher   Teacher?  @relation(fields: [leadTeacherId], references: [id])
-  students      Student[]
-  seances       Seance[]
+  supervisorId String?
+  supervisor   Employee? @relation(fields: [supervisorId], references: [id])
+
+  students Student[]
+  seances  Seance[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-enum SessionName {
-  Matinée
-  Journée_Complète
-  Périscolaire
-}
+// =======================
+// SESSION
+// =======================
 
-// 🟢 NEW MODEL: Broad daycare care blocks (e.g., "Morning only")
 model Session {
-  id          String      @id @default(uuid())
-  sessionname SessionName
-  name        String // e.g., "Matinée", "Journée Complète", "Périscolaire"
-  startTime   String // e.g., "07:30"
-  endTime     String // e.g., "12:30"
+  id String @id @default(uuid())
 
-  // To evaluate revenue or calculate billing by plan
-  basePrice Decimal? @db.Decimal(10, 2)
+  name SessionName
 
-  students Student[] // Children enrolled specifically in this recurring timeframe
+  startTime String
+  endTime   String
+
+  maxStudents Int?
+
+  basePrice Float?
+
+  students Student[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-// Fixed timeframe hourly events or subjects inside the classroom
+// =======================
+// SEANCE
+// =======================
+
 model Seance {
-  id        String @id @default(uuid())
-  subject   String // e.g., "Sieste", "Painting"
-  dayOfWeek String // e.g., "Monday", "Tuesday"
-  startTime String // e.g., "09:00"
-  endTime   String // e.g., "10:30"
+  id String @id @default(uuid())
+
+  subject   String
+  dayOfWeek String
+  startTime String
+  endTime   String
 
   classroomId String
   classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
 
-  teacherId String?
-  teacher   Teacher? @relation(fields: [teacherId], references: [id])
+  employeeId String?
+  employee   Employee? @relation(fields: [employeeId], references: [id])
 
   attendance Attendance[]
 
@@ -181,10 +216,15 @@ model Seance {
   @@map("seance")
 }
 
+// =======================
+// ATTENDANCE
+// =======================
+
 model Attendance {
-  id           String    @id @default(uuid())
-  date         DateTime  @default(now())
-  status       Status    @default(PRESENT)
+  id String @id @default(uuid())
+
+  date         DateTime @default(now())
+  status       Status @default(PRESENT)
   checkInTime  DateTime?
   checkOutTime DateTime?
 
@@ -198,14 +238,23 @@ model Attendance {
   updatedAt DateTime @updatedAt
 
   @@unique([studentId, date, seanceId])
+  @@index([studentId])
+  @@index([date])
 }
 
-model Payment {
-  id          String @id @default(uuid())
-  paymentType String
-  monthPaid   String
+// =======================
+// PAYMENT
+// =======================
 
-  amount      Decimal  @db.Decimal(10, 2)
+model Payment {
+  id String @id @default(uuid())
+
+  paymentType PaymentType
+
+  billingMonth DateTime
+
+  amount Float
+
   paymentDate DateTime @default(now())
 
   studentId String
@@ -213,86 +262,65 @@ model Payment {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([billingMonth])
 }
 
+// =======================
+// EXPENSE
+// =======================
+
 model Expense {
-  id          String   @id @default(uuid())
-  title       String // e.g., "Art Supplies", "Electricity Bill"
-  category    String // e.g., "Utilities", "Salaries", "Supplies"
-  amount      Decimal  @db.Decimal(10, 2)
+  id String @id @default(uuid())
+
+  title String
+
+  category ExpenseCategory
+
+  amount Float
+
   expenseDate DateTime @default(now())
 
-  description String? // Optional details
+  description String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("expenses")
 }
+model StudentGuardian {
+  studentId    String
+  guardianId   String
+  relationship String // e.g., "Mother", "Father", "Grandparent"
+  isEmergency  Boolean @default(false)
+  createdById  String
 
-// 🍎 1. Catalogue des ingrédients et état des stocks
-model Ingredient {
-  id             String  @id @default(uuid())
-  name           String  @unique // ex: "Lait", "Pommes de terre"
-  category       String // ex: "Produits laitiers", "Légumes"
-  currentStock   Decimal @default(0) @db.Decimal(10, 2)
-  unit           String // ex: "kg", "litres", "pièces"
-  alertThreshold Decimal @default(5) @db.Decimal(10, 2) // Seuil d'alerte pour rachat
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  guardian  Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  createdBy User     @relation("UserCreatedLinks", fields: [createdById], references: [id])
 
-  needs         KitchenNeed[]
-  purchaseItems PurchaseItem[]
-
+  @@id([studentId, guardianId])
+}
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  role      UserRole @default(USER)
+  email     String   @unique
+  password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("ingredients")
+  userProfile  UserProfile?
+  createdLinks StudentGuardian[] @relation("UserCreatedLinks")
 }
-
-// 📝 2. Liste des besoins en cuisine pour préparer les repas
-model KitchenNeed {
-  id             String     @id @default(uuid())
-  quantityNeeded Decimal    @db.Decimal(10, 2)
-  status         NeedStatus @default(PENDING) // En attente, Acheté
-
-  ingredientId String
-  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("kitchen_needs")
-}
-
-enum NeedStatus {
-  PENDING
-  PURCHASED
-}
-
-model KitchenPurchase {
-  id           String   @id @default(uuid())
-  supplier     String? // Nom du magasin ou fournisseur
-  purchaseDate DateTime @default(now())
-  paymentType  String // "Cash", "Card", "Transfer"
-  totalAmount  Decimal  @db.Decimal(10, 2) // Montant total de la facture
-
-  items PurchaseItem[] // Détails des articles sur le ticket
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("kitchen_purchases")
-}
-
-model PurchaseItem {
-  id        String  @id @default(uuid())
-  quantity  Decimal @db.Decimal(10, 2)
-  unitPrice Decimal @db.Decimal(10, 2) // Prix unitaire lors de cet achat
-
-  purchaseId String
-  purchase   KitchenPurchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
-
-  ingredientId String
-  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
-
-  @@map("purchase_items")
+model UserProfile {
+  id          String  @id @default(uuid())
+  userId      String  @unique
+  fullAddress String
+  lastName    String
+  firstName   String
+  phoneNumber String?
+  dateOfBirth String?
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

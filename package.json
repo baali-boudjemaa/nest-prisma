@@ -14,7 +14,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "prisma:generate": "prisma generate",
-    "priinisma:migrate": "prisma migrate dev",
+    "priin-isma:migrate": "prisma migrate dev",
     "prisma:seed": "ts-node -r tsconfig-paths/register prisma/seed.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
