@@ -1,31 +1,23 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateClassDto } from './dto/create-class.dto';
-import { UpdateClassDto } from './dto/update-class.dto';
+import { CreateClassroomDto } from './dto/create-class.dto';
+import { UpdateClassroomDto } from './dto/update-class.dto';
 
 @Injectable()
 export class ClassService {
   constructor(private readonly prisma: PrismaService) { }
 
-  async create(createClassDto: CreateClassDto) {
-    const classroomData: Record<string, any> = {
-      name: createClassDto.name,
-      ageGroup: createClassDto.ageGroup ?? undefined,
-      capacity: createClassDto.capacity,
+  async create(createClassroomDto: CreateClassroomDto) {
+    const classroomData = {
+      name: createClassroomDto.name,
+      ageGroup: createClassroomDto.ageGroup ?? undefined,
+      capacity: createClassroomDto.capacity,
     };
 
-    if (createClassDto.leadTeacherId) {
-      classroomData.employees = {
-        create: {
-          employee: {
-            connect: { id: createClassDto.leadTeacherId },
-          },
-          isLead: true,
-        },
-      };
-    }
-
-    return await this.prisma.classroom.create({ data: classroomData });
+    return this.prisma.classroom.create({
+      data: classroomData,
+    });
   }
 
   findAll() {
@@ -61,15 +53,15 @@ export class ClassService {
     return classroom;
   }
 
-  async update(id: string, updateClassDto: UpdateClassDto) {
+  async update(id: string, updateClassroomDto: UpdateClassroomDto) {
     await this.findOne(id);
 
     return this.prisma.classroom.update({
       where: { id },
       data: {
-        name: updateClassDto.name,
-        ageGroup: updateClassDto.ageGroup,
-        capacity: updateClassDto.capacity,
+        name: updateClassroomDto.name,
+        ageGroup: updateClassroomDto.ageGroup,
+        capacity: updateClassroomDto.capacity,
       },
     });
   }

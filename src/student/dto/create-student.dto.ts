@@ -18,6 +18,7 @@ export enum StudentLevel {
 }
 
 export class CreateStudentDto {
+  [x: string]: any;
   @IsString()
   studentNumber: string;
 

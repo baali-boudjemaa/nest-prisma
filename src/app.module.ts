@@ -6,7 +6,6 @@ import { AttendanceModule } from './attendance/attendance.module';
 import { AuthModule } from './auth/auth.module';
 import { ClassModule } from './classroom/class.module';
 import { DailyLogModule } from './daily-log/daily-log.module';
-import { TeacherModule } from './employee/teacher.module';
 import { GuardianModule } from './guardian/guardian.module';
 import { InscriptionModule } from './inscription/inscription.module';
 import { OverviewController } from './overview/overview.controller';
@@ -17,11 +16,7 @@ import { PrismaService } from './prisma/prisma.service';
 import { StudentMilestoneModule } from './student-milestone/student-milestone.module';
 import { StudentModule } from './student/student.module';
 import { UserModule } from './user/user.module';
-import { UsersModule } from './users/users.module';
-import { EmployeesModule } from './employees/employees.module';
 import { GuardiansModule } from './guardians/guardians.module';
-import { StudentsModule } from './students/students.module';
-import { ClassroomsModule } from './classrooms/classrooms.module';
 import { SchoolYearsModule } from './school-years/school-years.module';
 import { InscriptionsModule } from './inscriptions/inscriptions.module';
 import { AbsencesModule } from './absences/absences.module';
@@ -32,11 +27,14 @@ import { EnrollmentsModule } from './enrollments/enrollments.module';
 import { CourseAttendanceModule } from './course-attendance/course-attendance.module';
 import { ExamsModule } from './exams/exams.module';
 import { GradesModule } from './grades/grades.module';
-import { PaymentsModule } from './payments/payments.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthGuard } from './auth/guards/auth.guard';
+import { RolesGuard } from './auth/guards/roles.guard';
+
 const ENV = `.env.${process.env.NODE_ENV}`;
 console.log(ENV);
 const ENV_FILE_PATH = process.env.ENV_FILE_PATH ?? ENV;
@@ -52,18 +50,13 @@ const ENV_FILE_PATH = process.env.ENV_FILE_PATH ?? ENV;
     OverviewModule,
     StudentModule,
     ClassModule,
-    TeacherModule,
     PaymentModule,
     GuardianModule,
     InscriptionModule,
     AttendanceModule,
     DailyLogModule,
     StudentMilestoneModule,
-    UsersModule,
-    EmployeesModule,
     GuardiansModule,
-    StudentsModule,
-    ClassroomsModule,
     SchoolYearsModule,
     InscriptionsModule,
     AbsencesModule,
@@ -74,13 +67,21 @@ const ENV_FILE_PATH = process.env.ENV_FILE_PATH ?? ENV;
     CourseAttendanceModule,
     ExamsModule,
     GradesModule,
-    PaymentsModule,
     ExpensesModule,
     InventoryModule,
     DashboardModule,
     PrismaModule,
   ],
   controllers: [AppController, OverviewController],
-  providers: [AppService, PrismaService, OverviewService],
+  providers: [AppService, PrismaService, OverviewService
+    ,{
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+  ],
 })
 export class AppModule { }

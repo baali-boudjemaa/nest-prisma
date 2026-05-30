@@ -7,8 +7,12 @@ import {
   Patch,
   Post,
   Req,
+  UseGuards,
 } from '@nestjs/common';
-import { Public } from '../auth/decorator';
+import { Public } from '../auth/decorators/decorator';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { AuthGuard } from '../auth/guards/auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { StudentService } from './student.service';
@@ -24,10 +28,13 @@ export class StudentController {
     return this.studentService.create(createStudentDto);
   }
 
-  @Public()
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  @UseGuards(AuthGuard, RolesGuard)
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  @Roles('ADMIN')
   @Get()
   findAll() {
-    return this.studentService.findAll();
+    //return this.studentService.findAll(studentFilterDto);
   }
 
   @Public()

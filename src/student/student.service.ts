@@ -1,13 +1,16 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Sexe } from '@prisma/client';
+import { Prisma, Sexe } from '@prisma/client';
 
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
+import { StudentFilterDto } from '../common/dto/student-filter.dto';
 
 @Injectable()
 export class StudentService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(dto: CreateStudentDto) {
     const count = await this.prisma.student.count();
@@ -27,25 +30,21 @@ export class StudentService {
 
         guardians: dto.guardian
           ? {
-              create: {
-                isEmergencyContact:
-                  dto.guardian.isEmergencyContact ?? false,
+            create: {
+          
 
-                isAuthorizedToPickUp:
-                  dto.guardian.isAuthorizedToPickUp ?? true,
-
-                guardian: {
-                  create: {
-                    firstName: dto.guardian.firstName,
-                    lastName: dto.guardian.lastName,
-                    phoneNumber: dto.guardian.phoneNumber,
-                    email: dto.guardian.email,
-                    relation: dto.guardian.relation,
-                    address: dto.guardian.address,
-                  },
+              guardian: {
+                create: {
+                  firstName: dto.guardian.firstName,
+                  lastName: dto.guardian.lastName,
+                  phoneNumber: dto.guardian.phoneNumber,
+                  email: dto.guardian.email,
+                  relation: dto.guardian.relation,
+                  address: dto.guardian.address,
                 },
               },
-            }
+            },
+          }
           : undefined,
       },
 
@@ -59,38 +58,7 @@ export class StudentService {
     });
   }
 
-  async findAll() {
-    return this.prisma.student.findMany({
-      include: {
-        guardians: {
-          include: {
-            guardian: true,
-          },
-        },
 
-        inscriptions: {
-          include: {
-            classroom: true,
-            anneeScolaire: true,
-          },
-        },
-
-        attendance: true,
-        absences: true,
-        dailyLogs: true,
-
-        milestones: {
-          include: {
-            milestone: true,
-          },
-        },
-      },
-
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-  }
 
   async findOne(id: string) {
     const student = await this.prisma.student.findUnique({
@@ -146,6 +114,7 @@ export class StudentService {
         }),
 
         ...(dto.gender && {
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
           gender: dto.gender as Sexe,
         }),
 
@@ -171,15 +140,12 @@ export class StudentService {
   async assignExistingGuardian(
     studentId: string,
     guardianId: string,
-    isEmergencyContact = false,
-    isAuthorizedToPickUp = true,
+
   ) {
     return this.prisma.studentGuardian.create({
       data: {
         studentId,
         guardianId,
-        isEmergencyContact,
-        isAuthorizedToPickUp,
       },
     });
   }
@@ -201,5 +167,55 @@ export class StudentService {
         session,
       },
     });
+  }
+  async findAll(filter: StudentFilterDto) {
+    const { page = 1, limit = 10, search } = filter;
+
+    const where = search
+      ? {
+        OR: [
+          {
+            firstName: {
+              contains: search,
+              mode: 'insensitive' as Prisma.QueryMode,
+            },
+          },
+          {
+            lastName: {
+              contains: search,
+              mode: 'insensitive' as Prisma.QueryMode,
+            },
+          },
+          {
+            studentNumber: {
+              contains: search,
+              mode: 'insensitive' as Prisma.QueryMode,
+            },
+          },
+        ],
+      }
+      : {};
+
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.student.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      this.prisma.student.count({
+        where,
+      }),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 }
