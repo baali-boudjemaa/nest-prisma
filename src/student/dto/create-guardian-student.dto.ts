@@ -1,18 +1,18 @@
-import {IsNotEmpty, IsString,IsBoolean} from 'class-validator';
-import { CreateGuardianDto } from './create-guardian.dto';
+import {
+  IsBoolean,
+  IsUUID,
+} from 'class-validator';
 
-export class CreateGuardianStudentDto {
-  @IsNotEmpty()
-  @IsString()
-  relationship: string;
+export class CreateStudentGuardianDto {
+  @IsUUID()
+  studentId: string;
 
-  @IsNotEmpty()
+  @IsUUID()
+  guardianId: string;
+
   @IsBoolean()
-  isEmergency: boolean;
+  isEmergencyContact: boolean;
 
-  @IsNotEmpty()
-  @IsString()
-  createdById: string;
-  @IsNotEmpty()
-  guardian : CreateGuardianDto;
+  @IsBoolean()
+  isAuthorizedToPickUp: boolean;
 }

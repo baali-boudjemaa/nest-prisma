@@ -1,25 +1,34 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString, IsPhoneNumber } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsString,
+} from 'class-validator';
 
-export class CreateTeacherDto {
+export enum EmployeeRole {
+  ADMIN = 'ADMIN',
+  RECEPTIONIST = 'RECEPTIONIST',
+  TEACHER = 'TEACHER',
+  ASSISTANT = 'ASSISTANT',
+  KITCHEN = 'KITCHEN',
+  CLEANER = 'CLEANER',
+}
+
+export class CreateEmployeeDto {
   @IsString()
-  @IsNotEmpty()
+  employeeNumber: string;
+
+  @IsString()
   firstName: string;
 
   @IsString()
-  @IsNotEmpty()
   lastName: string;
 
   @IsString()
-  @IsNotEmpty()
-  // You can use @IsPhoneNumber('DZ') if you want to strictly validate Algerian numbers
   phoneNumber: string;
 
   @IsEmail()
-  @IsNotEmpty()
   email: string;
 
-  @IsString()
-  @IsOptional()
-  certifications?: string; // e.g., "CPR, ECE"
+  @IsEnum(EmployeeRole)
+  role: EmployeeRole;
 }
-

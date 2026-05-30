@@ -1,24 +1,44 @@
-import { IsEmail, MinLength, IsNotEmpty, } from 'class-validator';
-// create-student.dto.ts
+import {
+  IsDateString,
+  IsEnum,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+
+export enum Sexe {
+  MALE = 'MALE',
+  FEMALE = 'FEMALE',
+}
+
+export enum StudentLevel {
+  NURSERY = 'NURSERY',
+  PRIMARY = 'PRIMARY',
+  MIDDLE = 'MIDDLE',
+  SECONDARY = 'SECONDARY',
+}
 
 export class CreateStudentDto {
-  firstName!: string;
-  lastName!: string;
-  dateOfBirth!: string;
+  @IsString()
+  studentNumber: string;
 
-  gender?: 'MALE' | 'FEMALE';
+  @IsString()
+  firstName: string;
 
+  @IsString()
+  lastName: string;
+
+  @IsDateString()
+  dateOfBirth: Date;
+
+  @IsOptional()
+  @IsEnum(Sexe)
+  gender?: Sexe;
+
+  @IsOptional()
+  @IsEnum(StudentLevel)
+  level?: StudentLevel;
+
+  @IsOptional()
+  @IsString()
   medicalInfo?: string;
-
-  guardian!: {
-    firstName: string;
-    lastName: string;
-    phoneNumber: string;
-    email: string;
-    relation: string;
-    address?: string;
-
-    isEmergencyContact?: boolean;
-    isAuthorizedToPickUp?: boolean;
-  };
 }

@@ -1,19 +1,17 @@
-import { IsInt, IsNotEmpty, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import {
+  IsInt,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
-export class CreateClassDto {
+export class CreateClassroomDto {
   @IsString()
-  @IsNotEmpty()
-  name?: string;
+  name: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   ageGroup?: string;
 
   @IsInt()
-  @Min(1)
-  capacity?: number;
-
-  @IsUUID()
-  @IsOptional()
-  leadTeacherId?: string;
+  capacity: number;
 }
