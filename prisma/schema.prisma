@@ -16,27 +16,40 @@ datasource db {
   provider = "postgresql"
 }
 
-// =======================
-// ENUMS
-// =======================
-
-
-
-// =======================
-// ENUMS
-// =======================
-
 enum Sexe {
   MALE
   FEMALE
 }
 
 enum EmployeeRole {
+  ADMIN
+  RECEPTIONIST
   TEACHER
   ASSISTANT
   KITCHEN
   CLEANER
+}
+
+enum UserRole {
+  SUPER_ADMIN
   ADMIN
+  RECEPTIONIST
+  TEACHER
+  PARENT
+  KITCHEN
+}
+
+enum StudentLevel {
+  NURSERY
+  PRIMARY
+  MIDDLE
+  SECONDARY
+}
+
+enum CourseType {
+  LANGUAGE
+  SCIENCE
+  SUPPORT
 }
 
 enum PaymentType {
@@ -49,20 +62,6 @@ enum SessionName {
   MATINEE
   JOURNEE_COMPLETE
   PERISCOLAIRE
-}
-
-enum MilestoneStatus {
-  NOT_STARTED
-  IN_PROGRESS
-  ACQUIRED
-}
-
-enum LogType {
-  MEAL
-  NAP
-  BATHROOM
-  MEDICATION
-  BEHAVIOR
 }
 
 enum AttendanceStatus {
@@ -85,9 +84,49 @@ enum NeedStatus {
   PURCHASED
 }
 
-// =======================
-// STAFF
-// =======================
+enum MilestoneStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  ACQUIRED
+}
+
+enum LogType {
+  MEAL
+  NAP
+  BATHROOM
+  MEDICATION
+  BEHAVIOR
+}
+
+model User {
+  id       String   @id @default(uuid())
+  email    String   @unique
+  password String
+  role     UserRole
+
+  employeeId String? @unique
+  guardianId String? @unique
+
+  employee Employee? @relation(fields: [employeeId], references: [id])
+  guardian Guardian? @relation(fields: [guardianId], references: [id])
+
+  profile UserProfile?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserProfile {
+  id          String  @id @default(uuid())
+  userId      String  @unique
+  firstName   String
+  lastName    String
+  phoneNumber String?
+  fullAddress String?
+  dateOfBirth String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
 
 model Employee {
   id             String       @id @default(uuid())
@@ -96,47 +135,16 @@ model Employee {
   lastName       String
   phoneNumber    String
   email          String       @unique
-  role           EmployeeRole @default(TEACHER)
-  certifications String?
+  role           EmployeeRole
 
+  users      User[]
   classrooms EmployeeClassroom[]
   dailyLogs  DailyLog[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  users User[]
-}
-
-// =======================
-// STUDENTS
-// =======================
-
-model Student {
-  id            String @id @default(uuid())
-  studentNumber String @unique
-
-  firstName      String
-  lastName       String
-  dateOfBirth    DateTime
-  gender         Sexe?
-  medicalInfo    String?
-  enrollmentDate DateTime @default(now())
-
-  guardians    StudentGuardian[]
-  inscriptions Inscription[]
-  absences     Absence[]
-  attendance   Attendance[]
-  dailyLogs    DailyLog[]
-  milestones   StudentMilestone[]
+  courses    Course[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-
-// =======================
-// GUARDIANS
-// =======================
 
 model Guardian {
   id          String  @id @default(uuid())
@@ -147,7 +155,35 @@ model Guardian {
   relation    String
   address     String?
 
+  user     User?
   students StudentGuardian[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Student {
+  id            String @id @default(uuid())
+  studentNumber String @unique
+
+  firstName      String
+  lastName       String
+  dateOfBirth    DateTime
+  gender         Sexe?
+  level          StudentLevel?
+  medicalInfo    String?
+  enrollmentDate DateTime      @default(now())
+
+  guardians    StudentGuardian[]
+  inscriptions Inscription[]
+  attendance   Attendance[]
+  absences     Absence[]
+  dailyLogs    DailyLog[]
+  milestones   StudentMilestone[]
+
+  enrollments      Enrollment[]
+  courseAttendance CourseAttendance[]
+  grades           Grade[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -158,27 +194,17 @@ model StudentGuardian {
   studentId  String
   guardianId String
 
-  isEmergencyContact   Boolean @default(false)
-  isAuthorizedToPickUp Boolean @default(true)
-
   student  Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   guardian Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, guardianId])
 }
 
-// =======================
-// ACADEMIC
-// =======================
-
 model AnneeScolaire {
   id             String @id @default(uuid())
   libelleAnneesc String @unique
 
   inscriptions Inscription[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model Classroom {
@@ -189,9 +215,6 @@ model Classroom {
 
   inscriptions Inscription[]
   employees    EmployeeClassroom[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model EmployeeClassroom {
@@ -213,9 +236,7 @@ model Inscription {
   anneeScolaireId String
   classId         String
 
-  session SessionName @default(JOURNEE_COMPLETE)
-
-  dateInscription DateTime @default(now())
+  session SessionName
 
   student       Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
   anneeScolaire AnneeScolaire @relation(fields: [anneeScolaireId], references: [id], onDelete: Cascade)
@@ -224,65 +245,36 @@ model Inscription {
   payments Payment[]
 }
 
-// =======================
-// ATTENDANCE
-// =======================
-
 model Attendance {
-  id String @id @default(uuid())
-
+  id        String           @id @default(uuid())
   studentId String
   date      DateTime
-
-  status AttendanceStatus @default(PRESENT)
-
-  checkInTime  DateTime?
-  checkOutTime DateTime?
+  status    AttendanceStatus
 
   student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   @@unique([studentId, date])
 }
 
 model Absence {
-  id        String @id @default(uuid())
+  id        String   @id @default(uuid())
   studentId String
-
-  dateAbsc DateTime
-  motif    String?
+  dateAbsc  DateTime
+  motif     String?
 
   student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
 }
 
-// =======================
-// DAILY LOGS
-// =======================
-
 model DailyLog {
-  id String @id @default(uuid())
-
+  id         String  @id @default(uuid())
   studentId  String
   employeeId String
-
-  type      LogType
-  timestamp DateTime @default(now())
-
-  notes String
+  type       LogType
+  notes      String
 
   student  Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
 }
-
-// =======================
-// MILESTONES
-// =======================
 
 model Milestone {
   id          String @id @default(uuid())
@@ -293,165 +285,161 @@ model Milestone {
 }
 
 model StudentMilestone {
-  id String @id @default(uuid())
-
+  id          String          @id @default(uuid())
   studentId   String
   milestoneId String
-
-  status MilestoneStatus @default(NOT_STARTED)
+  status      MilestoneStatus
 
   student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
   milestone Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
 
-  updatedAt DateTime @updatedAt
-
   @@unique([studentId, milestoneId])
 }
 
-// =======================
-// FINANCE
-// =======================
+model Course {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  type        CourseType
+
+  monthlyFee Decimal @db.Decimal(10, 2)
+
+  teacherId String?
+  teacher   Employee? @relation(fields: [teacherId], references: [id])
+
+  enrollments Enrollment[]
+  schedules   CourseSchedule[]
+  attendances CourseAttendance[]
+  exams       Exam[]
+}
+
+model CourseSchedule {
+  id        String @id @default(uuid())
+  courseId  String
+  dayOfWeek Int
+  startTime String
+  endTime   String
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model Enrollment {
+  id        String  @id @default(uuid())
+  studentId String
+  courseId  String
+  active    Boolean @default(true)
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  payments CoursePayment[]
+
+  @@unique([studentId, courseId])
+}
+
+model CourseAttendance {
+  id             String           @id @default(uuid())
+  studentId      String
+  courseId       String
+  attendanceDate DateTime
+  status         AttendanceStatus
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model Exam {
+  id       String @id @default(uuid())
+  title    String
+  courseId String
+
+  course Course  @relation(fields: [courseId], references: [id])
+  grades Grade[]
+}
+
+model Grade {
+  id        String  @id @default(uuid())
+  examId    String
+  studentId String
+  score     Float
+  remarks   String?
+
+  exam    Exam    @relation(fields: [examId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([examId, studentId])
+}
 
 model SessionPricing {
-  id String @id @default(uuid())
-
+  id         String      @id @default(uuid())
   session    SessionName @unique
-  monthlyFee Float
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  monthlyFee Decimal     @db.Decimal(10, 2)
 }
 
 model Payment {
-  id String @id @default(uuid())
-
+  id            String      @id @default(uuid())
   inscriptionId String
-
-  amount        Float
-  paymentMethod PaymentType @default(CASH)
-
-  datePay DateTime @default(now())
-  label   String
+  amount        Decimal     @db.Decimal(10, 2)
+  paymentMethod PaymentType
+  label         String?
 
   inscription Inscription @relation(fields: [inscriptionId], references: [id], onDelete: Cascade)
+}
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model CoursePayment {
+  id            String      @id @default(uuid())
+  enrollmentId  String
+  amount        Decimal     @db.Decimal(10, 2)
+  paymentMethod PaymentType
+
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
 }
 
 model Expense {
-  id String @id @default(uuid())
-
-  title    String
-  category ExpenseCategory
-
-  amount Float
-
-  expenseDate DateTime @default(now())
-
+  id          String          @id @default(uuid())
+  title       String
+  category    ExpenseCategory
+  amount      Decimal         @db.Decimal(10, 2)
   description String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
-// =======================
-// KITCHEN INVENTORY
-// =======================
-
 model Ingredient {
-  id String @id @default(uuid())
-
-  name     String @unique
-  category String
-
-  currentStock Float  @default(0)
-  unit         String
-
-  alertThreshold Float @default(5)
+  id             String @id @default(uuid())
+  name           String @unique
+  category       String
+  currentStock   Float  @default(0)
+  unit           String
+  alertThreshold Float  @default(5)
 
   needs         KitchenNeed[]
   purchaseItems PurchaseItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model KitchenNeed {
-  id String @id @default(uuid())
-
+  id             String     @id @default(uuid())
+  ingredientId   String
   quantityNeeded Float
-
-  status NeedStatus @default(PENDING)
-
-  ingredientId String
+  status         NeedStatus
 
   ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model KitchenPurchase {
-  id String @id @default(uuid())
-
-  supplier     String?
-  purchaseDate DateTime @default(now())
-
+  id          String      @id @default(uuid())
+  supplier    String?
   paymentType PaymentType
-  totalAmount Float
+  totalAmount Decimal     @db.Decimal(10, 2)
 
   items PurchaseItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model PurchaseItem {
-  id String @id @default(uuid())
-
-  quantity  Float
-  unitPrice Float
-
-  purchaseId String
-  purchase   KitchenPurchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
-
+  id           String  @id @default(uuid())
+  purchaseId   String
   ingredientId String
-  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  quantity     Float
+  unitPrice    Decimal @db.Decimal(10, 2)
 
-  createdAt DateTime @default(now())
-}
-
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-
-  role      UserRole @default(TEACHER)
-
-  employeeId String?   @unique
-  employee   Employee? @relation(fields: [employeeId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  userProfiles UserProfile[]
-}
-
-model UserProfile {
-  id          String  @id @default(uuid())
-  userId      String  @unique
-  fullAddress String
-  lastName    String
-  firstName   String
-  phoneNumber String?
-  dateOfBirth String?
-  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-enum UserRole {
-  ADMIN
-  TEACHER
-  ASSISTANT
-  KITCHEN
-  CLEANER
+  purchase   KitchenPurchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  ingredient Ingredient      @relation(fields: [ingredientId], references: [id])
 }

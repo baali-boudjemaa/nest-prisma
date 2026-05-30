@@ -1,31 +1,24 @@
-import { IsEmail, MinLength, IsNotEmpty, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
-import { CreateGuardianStudentDto } from './create-guardian-student.dto';
+import { IsEmail, MinLength, IsNotEmpty, } from 'class-validator';
+// create-student.dto.ts
 
 export class CreateStudentDto {
-  @IsNotEmpty()
-  firstName: string;
+  firstName!: string;
+  lastName!: string;
+  dateOfBirth!: string;
 
-  @IsNotEmpty()
-  lastName: string;
+  gender?: 'MALE' | 'FEMALE';
 
-  @IsNotEmpty()
-  dateOfBirth: Date;
+  medicalInfo?: string;
 
-  @IsNotEmpty()
-  gender: string;
+  guardian!: {
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    email: string;
+    relation: string;
+    address?: string;
 
-  @IsNotEmpty()
-  medicalInfo: string;
-
-  @IsNotEmpty()
-  enrollmentDate: Date;
-
-  @IsNotEmpty()
-  classId : string;
-
-  @ValidateNested()
-  @Type(() => CreateGuardianStudentDto)
-  @IsNotEmpty()
-  guardians: CreateGuardianStudentDto;
+    isEmergencyContact?: boolean;
+    isAuthorizedToPickUp?: boolean;
+  };
 }

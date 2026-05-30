@@ -1,39 +1,84 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateClassDto } from './dto/create-class.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
-import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class ClassService {
   constructor(private readonly prisma: PrismaService) { }
 
   async create(createClassDto: CreateClassDto) {
-    const classroomData = {
-  name: createClassDto.name,
-  ageGroup: createClassDto.ageGroup ?? null,
-  roomNumber: createClassDto.roomNumber ?? null,
-  maxCapacity: createClassDto.maxCapacity ?? 0,
-  // Fix: Explicitly pass null instead of letting it be undefined
-  employeeId: createClassDto.supervisorId  ,
-};
+    const classroomData: Record<string, any> = {
+      name: createClassDto.name,
+      ageGroup: createClassDto.ageGroup ?? undefined,
+      capacity: createClassDto.capacity,
+    };
 
-      return await prisma.classroom.create({ data: classroomData });
+    if (createClassDto.leadTeacherId) {
+      classroomData.employees = {
+        create: {
+          employee: {
+            connect: { id: createClassDto.leadTeacherId },
+          },
+          isLead: true,
+        },
+      };
+    }
 
+    return await this.prisma.classroom.create({ data: classroomData });
   }
 
   findAll() {
-    return `This action returns all class`;
+    return this.prisma.classroom.findMany({
+      include: {
+        employees: {
+          include: {
+            employee: true,
+          },
+        },
+        inscriptions: true,
+      },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} class`;
+  async findOne(id: string) {
+    const classroom = await this.prisma.classroom.findUnique({
+      where: { id },
+      include: {
+        employees: {
+          include: {
+            employee: true,
+          },
+        },
+        inscriptions: true,
+      },
+    });
+
+    if (!classroom) {
+      throw new NotFoundException(`Classroom with id ${id} not found`);
+    }
+
+    return classroom;
   }
 
-  update(id: number, updateClassDto: UpdateClassDto) {
-    return `This action updates a #${id} class`;
+  async update(id: string, updateClassDto: UpdateClassDto) {
+    await this.findOne(id);
+
+    return this.prisma.classroom.update({
+      where: { id },
+      data: {
+        name: updateClassDto.name,
+        ageGroup: updateClassDto.ageGroup,
+        capacity: updateClassDto.capacity,
+      },
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} class`;
+  async remove(id: string) {
+    await this.findOne(id);
+
+    return this.prisma.classroom.delete({
+      where: { id },
+    });
   }
 }

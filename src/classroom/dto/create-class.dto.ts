@@ -1,24 +1,19 @@
-import { IsString, IsNotEmpty, IsOptional, IsInt, Min, IsUUID } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 
 export class CreateClassDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name?: string;
 
   @IsString()
   @IsOptional()
   ageGroup?: string;
 
-  @IsString()
-  @IsOptional()
-  roomNumber?: string;
-
   @IsInt()
   @Min(1)
-  @IsOptional()
-  maxCapacity?: number;
+  capacity?: number;
 
-  @IsUUID() // Assuming Teacher ID is a UUID
+  @IsUUID()
   @IsOptional()
   leadTeacherId?: string;
 }

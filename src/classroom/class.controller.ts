@@ -1,11 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { ClassService } from './class.service';
 import { CreateClassDto } from './dto/create-class.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
 
-@Controller('class')
+@Controller('classrooms')
 export class ClassController {
-  constructor(private readonly classService: ClassService) {}
+  constructor(private readonly classService: ClassService) { }
 
   @Post()
   create(@Body() createClassDto: CreateClassDto) {
@@ -19,16 +19,16 @@ export class ClassController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.classService.findOne(+id);
+    return this.classService.findOne(id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateClassDto: UpdateClassDto) {
-    return this.classService.update(+id, updateClassDto);
+    return this.classService.update(id, updateClassDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.classService.remove(+id);
+    return this.classService.remove(id);
   }
 }

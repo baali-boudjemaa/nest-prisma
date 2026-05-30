@@ -1,122 +1,205 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { Sexe } from '@prisma/client';
+
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateGuardianDto } from './dto/create-guardian.dto';
-import { CreateGuardianStudentDto } from './dto/create-guardian-student.dto';
+
 @Injectable()
 export class StudentService {
-  constructor(private prisma: PrismaService) { }
-  /* 
-    async create(
-      createStudentDto: CreateStudentDto,
-      createGuardianDto: CreateGuardianDto,
-      createGuardianStudentDto: CreateGuardianStudentDto,
-      userId: string,
-    ) {
-      return this.prisma.student.create({
-        data: {
-          firstName: createStudentDto.firstName,
-          lastName: createStudentDto.lastName,
-          dateOfBirth: new Date(createStudentDto.dateOfBirth),
-          gender: createStudentDto.gender,
-          medicalInfo: createStudentDto.medicalInfo,
-          classId: createStudentDto.classId,
-          guardians: {
-            create: [
-              {
-                relationship: createGuardianStudentDto.relationship,
-                isEmergency: createGuardianStudentDto.isEmergency ?? true,
-                createdBy: {
-                  connect: { id: userId },
-                },
-                guardian: {
-                  create: {
-                    firstName: createGuardianDto.firstName,
-                    lastName: createGuardianDto.lastName,
-                    phoneNumber: createGuardianDto.phoneNumber,
-                    email: createGuardianDto.email,
-                    address: createGuardianDto.address,
-                  },
-                },
-              },
-            ],
-          },
-        },
-      });
-    }
-   */
-  async create(createStudentDto: CreateStudentDto) {
-    const { guardians, ...studentData } = createStudentDto;
+  constructor(private readonly prisma: PrismaService) {}
+
+  async create(dto: CreateStudentDto) {
+    const count = await this.prisma.student.count();
+
+    const studentNumber = `ST${String(count + 1).padStart(4, '0')}`;
 
     return this.prisma.student.create({
       data: {
-        ...studentData,
-        dateOfBirth: new Date(studentData.dateOfBirth),
-        enrollmentDate: new Date(studentData.enrollmentDate),
-        guardians: {
-          create: {
-            relationship: guardians.relationship,
-            isEmergency: guardians.isEmergency,
-            // Link the user who is performing the creation
-            createdBy: { connect: { id: guardians.createdById } },
-            // Create the actual guardian
-            guardian: {
-              create: guardians.guardian
+        studentNumber,
+
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        dateOfBirth: new Date(dto.dateOfBirth),
+
+        gender: dto.gender,
+        medicalInfo: dto.medicalInfo,
+
+        guardians: dto.guardian
+          ? {
+              create: {
+                isEmergencyContact:
+                  dto.guardian.isEmergencyContact ?? false,
+
+                isAuthorizedToPickUp:
+                  dto.guardian.isAuthorizedToPickUp ?? true,
+
+                guardian: {
+                  create: {
+                    firstName: dto.guardian.firstName,
+                    lastName: dto.guardian.lastName,
+                    phoneNumber: dto.guardian.phoneNumber,
+                    email: dto.guardian.email,
+                    relation: dto.guardian.relation,
+                    address: dto.guardian.address,
+                  },
+                },
+              },
             }
-          }
-        }
-      }
-    });
-  }
-
-
-  findAll() {
-    return this.prisma.student.findMany({
-      include: {
-        guardians: true,
-        class: true,
-        attendance: true,
-        payments: true,
+          : undefined,
       },
-    });
-  }
 
-  findOne(id: string) {
-    return this.prisma.student.findUnique({
-      where: { id },
       include: {
         guardians: {
           include: {
             guardian: true,
           },
         },
-        class: true,
-        attendance: true,
-        payments: true,
       },
     });
   }
 
-  async update(id: string, updateStudentDto: UpdateStudentDto) {
-    // Filter out undefined values and transform dates
-    const updateData: any = {};
+  async findAll() {
+    return this.prisma.student.findMany({
+      include: {
+        guardians: {
+          include: {
+            guardian: true,
+          },
+        },
 
-  
+        inscriptions: {
+          include: {
+            classroom: true,
+            anneeScolaire: true,
+          },
+        },
+
+        attendance: true,
+        absences: true,
+        dailyLogs: true,
+
+        milestones: {
+          include: {
+            milestone: true,
+          },
+        },
+      },
+
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
+  async findOne(id: string) {
+    const student = await this.prisma.student.findUnique({
+      where: { id },
+
+      include: {
+        guardians: {
+          include: {
+            guardian: true,
+          },
+        },
+
+        inscriptions: {
+          include: {
+            classroom: true,
+            anneeScolaire: true,
+            payments: true,
+          },
+        },
+
+        attendance: true,
+        absences: true,
+        dailyLogs: true,
+
+        milestones: {
+          include: {
+            milestone: true,
+          },
+        },
+      },
+    });
+
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+
+    return student;
+  }
+
+  async update(id: string, dto: UpdateStudentDto) {
+    await this.findOne(id);
 
     return this.prisma.student.update({
       where: { id },
-      data: updateData,
-      include: {
-        guardians: true,
-        class: true,
+
+      data: {
+        ...(dto.firstName && {
+          firstName: dto.firstName,
+        }),
+
+        ...(dto.lastName && {
+          lastName: dto.lastName,
+        }),
+
+        ...(dto.gender && {
+          gender: dto.gender as Sexe,
+        }),
+
+        ...(dto.medicalInfo && {
+          medicalInfo: dto.medicalInfo,
+        }),
+
+        ...(dto.dateOfBirth && {
+          dateOfBirth: new Date(dto.dateOfBirth),
+        }),
       },
     });
   }
 
   async remove(id: string) {
+    await this.findOne(id);
+
     return this.prisma.student.delete({
       where: { id },
+    });
+  }
+
+  async assignExistingGuardian(
+    studentId: string,
+    guardianId: string,
+    isEmergencyContact = false,
+    isAuthorizedToPickUp = true,
+  ) {
+    return this.prisma.studentGuardian.create({
+      data: {
+        studentId,
+        guardianId,
+        isEmergencyContact,
+        isAuthorizedToPickUp,
+      },
+    });
+  }
+
+  async createInscription(
+    studentId: string,
+    anneeScolaireId: string,
+    classId: string,
+    session:
+      | 'MATINEE'
+      | 'JOURNEE_COMPLETE'
+      | 'PERISCOLAIRE' = 'JOURNEE_COMPLETE',
+  ) {
+    return this.prisma.inscription.create({
+      data: {
+        studentId,
+        anneeScolaireId,
+        classId,
+        session,
+      },
     });
   }
 }
