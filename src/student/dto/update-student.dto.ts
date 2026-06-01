@@ -13,7 +13,7 @@ export class UpdateStudentDto extends PartialType(CreateStudentDto) {
 
     @IsOptional()
     @IsDateString()
-    dateOfBirth?: Date;
+    dateOfBirth?: string;
 
     @IsOptional()
     @IsEnum(Sexe)

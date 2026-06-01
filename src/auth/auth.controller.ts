@@ -1,6 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { Body, Controller, Get, Param, Post, Res } from '@nestjs/common';
 import type { Response } from 'express';
-import { UserService } from '../user/user.service';
+import { UsersService } from '../user/user.service';
 import { AuthService } from './auth.service';
 import { Public } from './decorators/decorator';
 import { signInDto } from './dto/sign-auth.dto';
@@ -9,7 +12,7 @@ import { signupDto } from './dto/signup-auth.dto';
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly userService: UserService,
+    private readonly userService: UsersService,
   ) { }
 
   @Post('/signup')
@@ -44,6 +47,6 @@ export class AuthController {
   }
   @Get('all')
   getAllUsers() {
-    return this.authService.geAllUsers();
+    return this.userService.getAllUsers();
   }
 }

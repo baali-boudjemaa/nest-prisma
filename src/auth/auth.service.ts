@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Injectable,
   NotFoundException,
@@ -6,13 +8,13 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
-import { UserService } from '../user/user.service';
+import { UsersService } from '../user/user.service';
 import { signInDto } from './dto/sign-auth.dto';
 import { signupDto } from './dto/signup-auth.dto';
 @Injectable()
 export class AuthService {
   constructor(
-    private userService: UserService,
+    private userService: UsersService,
     private jwtService: JwtService,
     private prismaService: PrismaService,
   ) {}
@@ -62,7 +64,7 @@ export class AuthService {
       }
     }
   }
-  async geAllUsers() {
+  async getAllUsers() {
     return await this.prismaService.user.findMany();
   }
 }

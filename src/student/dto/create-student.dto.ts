@@ -1,9 +1,12 @@
 import {
+  IsBoolean,
   IsDateString,
   IsEnum,
   IsOptional,
   IsString,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export enum Sexe {
   MALE = 'MALE',
@@ -17,19 +20,45 @@ export enum StudentLevel {
   SECONDARY = 'SECONDARY',
 }
 
+export class CreateStudentGuardianDto {
+  @IsString()
+  firstName!: string;
+
+  @IsString()
+  lastName!: string;
+
+  @IsString()
+  phoneNumber!: string;
+
+  @IsString()
+  email!: string;
+
+  @IsString()
+  relation!: string;
+
+  @IsString()
+  address!: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isEmergencyContact?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isAuthorizedToPickUp?: boolean;
+}
+
 export class CreateStudentDto {
   [x: string]: any;
-  @IsString()
-  studentNumber: string;
 
   @IsString()
-  firstName: string;
+  firstName!: string;
 
   @IsString()
-  lastName: string;
+  lastName!: string;
 
   @IsDateString()
-  dateOfBirth: Date;
+  dateOfBirth!: string;
 
   @IsOptional()
   @IsEnum(Sexe)
@@ -38,6 +67,11 @@ export class CreateStudentDto {
   @IsOptional()
   @IsEnum(StudentLevel)
   level?: StudentLevel;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateStudentGuardianDto)
+  guardian?: CreateStudentGuardianDto;
 
   @IsOptional()
   @IsString()

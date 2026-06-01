@@ -16,12 +16,18 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { StudentService } from './student.service';
+import { UserRole } from '../enums/UserRole';
 
 @Controller('student')
 export class StudentController {
   constructor(private readonly studentService: StudentService) { }
 
-  @Public()
+@UseGuards(AuthGuard, RolesGuard)
+@Roles(
+  UserRole.SUPER_ADMIN,
+  UserRole.ADMIN,
+  UserRole.RECEPTIONIST,
+)
   @Post()
   create(@Body() createStudentDto: CreateStudentDto, @Req() req) {
     console.log('Received create student request with data:', createStudentDto);

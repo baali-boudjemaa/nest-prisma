@@ -12,6 +12,7 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { IS_PUBLIC_KEY } from '../decorators/decorator';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Console } from 'console';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -19,7 +20,7 @@ export class AuthGuard implements CanActivate {
     private readonly jwtService: JwtService,
     private readonly reflector: Reflector,
     private readonly prisma: PrismaService,
-  ) {}
+  ) { }
 
   async canActivate(
     context: ExecutionContext,
@@ -52,14 +53,14 @@ export class AuthGuard implements CanActivate {
     try {
       const payload =
         await this.jwtService.verifyAsync(token);
-
       const user =
         await this.prisma.user.findUnique({
           where: {
-            id: payload.sub,
+            email: payload.sub,
           },
         });
-
+      console.log('Decoded JWT payload:', payload);
+       console.log('Decoded JWT payload:', user);
       if (!user) {
         throw new UnauthorizedException(
           'User not found',
@@ -71,7 +72,7 @@ export class AuthGuard implements CanActivate {
       return true;
     } catch {
       throw new UnauthorizedException(
-        'Invalid token',
+        'Invalid token or user not found',
       );
     }
   }
