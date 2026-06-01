@@ -1,0 +1,445 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider     = "prisma-client-js"
+  moduleFormat = "cjs"
+  // Output to backend node_modules so packaged app has everything together
+  output       = "../node_modules/.prisma/client"
+  engineType   = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Sexe {
+  MALE
+  FEMALE
+}
+
+enum EmployeeRole {
+  ADMIN
+  RECEPTIONIST
+  TEACHER
+  ASSISTANT
+  KITCHEN
+  CLEANER
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  RECEPTIONIST
+  TEACHER
+  PARENT
+  KITCHEN
+}
+
+enum StudentLevel {
+  NURSERY
+  PRIMARY
+  MIDDLE
+  SECONDARY
+}
+
+enum CourseType {
+  LANGUAGE
+  SCIENCE
+  SUPPORT
+}
+
+enum PaymentType {
+  CASH
+  CARD
+  TRANSFER
+}
+
+enum SessionName {
+  MATINEE
+  JOURNEE_COMPLETE
+  PERISCOLAIRE
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  EXCUSED
+}
+
+enum ExpenseCategory {
+  SALARY
+  FOOD
+  UTILITIES
+  SUPPLIES
+  MAINTENANCE
+  OTHER
+}
+
+enum NeedStatus {
+  PENDING
+  PURCHASED
+}
+
+enum MilestoneStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  ACQUIRED
+}
+
+enum LogType {
+  MEAL
+  NAP
+  BATHROOM
+  MEDICATION
+  BEHAVIOR
+}
+
+model User {
+  id       String   @id @default(uuid())
+  email    String   @unique
+  password String
+  role     UserRole
+
+  employeeId String? @unique
+  guardianId String? @unique
+
+  employee Employee? @relation(fields: [employeeId], references: [id])
+  guardian Guardian? @relation(fields: [guardianId], references: [id])
+
+  profile UserProfile?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserProfile {
+  id          String  @id @default(uuid())
+  userId      String  @unique
+  firstName   String
+  lastName    String
+  phoneNumber String?
+  fullAddress String?
+  dateOfBirth String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Employee {
+  id             String       @id @default(uuid())
+  employeeNumber String       @unique
+  firstName      String
+  lastName       String
+  phoneNumber    String
+  email          String       @unique
+  role           EmployeeRole
+
+  users      User[]
+  classrooms EmployeeClassroom[]
+  dailyLogs  DailyLog[]
+  courses    Course[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Guardian {
+  id          String  @id @default(uuid())
+  firstName   String
+  lastName    String
+  phoneNumber String
+  email       String  @unique
+  relation    String
+  address     String?
+
+  user     User?
+  students StudentGuardian[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Student {
+  id            String @id @default(uuid())
+  studentNumber String @unique
+
+  firstName      String
+  lastName       String
+  dateOfBirth    DateTime
+  gender         Sexe?
+  level          StudentLevel?
+  medicalInfo    String?
+  enrollmentDate DateTime      @default(now())
+
+  guardians    StudentGuardian[]
+  inscriptions Inscription[]
+  attendance   Attendance[]
+  absences     Absence[]
+  dailyLogs    DailyLog[]
+  milestones   StudentMilestone[]
+
+  enrollments      Enrollment[]
+  courseAttendance CourseAttendance[]
+  grades           Grade[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model StudentGuardian {
+  id         String @id @default(uuid())
+  studentId  String
+  guardianId String
+
+  student  Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  guardian Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, guardianId])
+}
+
+model AnneeScolaire {
+  id             String @id @default(uuid())
+  libelleAnneesc String @unique
+
+  inscriptions Inscription[]
+}
+
+model Classroom {
+  id       String  @id @default(uuid())
+  name     String
+  ageGroup String?
+  capacity Int
+
+  inscriptions Inscription[]
+  employees    EmployeeClassroom[]
+}
+
+model EmployeeClassroom {
+  id         String  @id @default(uuid())
+  employeeId String
+  classId    String
+  isLead     Boolean @default(false)
+
+  employee  Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  classroom Classroom @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, classId])
+}
+
+model Inscription {
+  id String @id @default(uuid())
+
+  studentId       String
+  anneeScolaireId String
+  classId         String
+
+  session SessionName
+
+  student       Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  anneeScolaire AnneeScolaire @relation(fields: [anneeScolaireId], references: [id], onDelete: Cascade)
+  classroom     Classroom     @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  payments Payment[]
+}
+
+model Attendance {
+  id        String           @id @default(uuid())
+  studentId String
+  date      DateTime
+  status    AttendanceStatus
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, date])
+}
+
+model Absence {
+  id        String   @id @default(uuid())
+  studentId String
+  dateAbsc  DateTime
+  motif     String?
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model DailyLog {
+  id         String  @id @default(uuid())
+  studentId  String
+  employeeId String
+  type       LogType
+  notes      String
+
+  student  Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+model Milestone {
+  id          String @id @default(uuid())
+  category    String
+  description String
+
+  students StudentMilestone[]
+}
+
+model StudentMilestone {
+  id          String          @id @default(uuid())
+  studentId   String
+  milestoneId String
+  status      MilestoneStatus
+
+  student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  milestone Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, milestoneId])
+}
+
+model Course {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  type        CourseType
+
+  monthlyFee Decimal @db.Decimal(10, 2)
+
+  teacherId String?
+  teacher   Employee? @relation(fields: [teacherId], references: [id])
+
+  enrollments Enrollment[]
+  schedules   CourseSchedule[]
+  attendances CourseAttendance[]
+  exams       Exam[]
+}
+
+model CourseSchedule {
+  id        String @id @default(uuid())
+  courseId  String
+  dayOfWeek Int
+  startTime String
+  endTime   String
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model Enrollment {
+  id        String  @id @default(uuid())
+  studentId String
+  courseId  String
+  active    Boolean @default(true)
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  payments CoursePayment[]
+
+  @@unique([studentId, courseId])
+}
+
+model CourseAttendance {
+  id             String           @id @default(uuid())
+  studentId      String
+  courseId       String
+  attendanceDate DateTime
+  status         AttendanceStatus
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model Exam {
+  id       String @id @default(uuid())
+  title    String
+  courseId String
+
+  course Course  @relation(fields: [courseId], references: [id])
+  grades Grade[]
+}
+
+model Grade {
+  id        String  @id @default(uuid())
+  examId    String
+  studentId String
+  score     Float
+  remarks   String?
+
+  exam    Exam    @relation(fields: [examId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([examId, studentId])
+}
+
+model SessionPricing {
+  id         String      @id @default(uuid())
+  session    SessionName @unique
+  monthlyFee Decimal     @db.Decimal(10, 2)
+}
+
+model Payment {
+  id            String      @id @default(uuid())
+  inscriptionId String
+  amount        Decimal     @db.Decimal(10, 2)
+  paymentMethod PaymentType
+  label         String?
+
+  inscription Inscription @relation(fields: [inscriptionId], references: [id], onDelete: Cascade)
+}
+
+model CoursePayment {
+  id            String      @id @default(uuid())
+  enrollmentId  String
+  amount        Decimal     @db.Decimal(10, 2)
+  paymentMethod PaymentType
+
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+}
+
+model Expense {
+  id          String          @id @default(uuid())
+  title       String
+  category    ExpenseCategory
+  amount      Decimal         @db.Decimal(10, 2)
+  description String?
+}
+
+model Ingredient {
+  id             String @id @default(uuid())
+  name           String @unique
+  category       String
+  currentStock   Float  @default(0)
+  unit           String
+  alertThreshold Float  @default(5)
+
+  needs         KitchenNeed[]
+  purchaseItems PurchaseItem[]
+}
+
+model KitchenNeed {
+  id             String     @id @default(uuid())
+  ingredientId   String
+  quantityNeeded Float
+  status         NeedStatus
+
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+}
+
+model KitchenPurchase {
+  id          String      @id @default(uuid())
+  supplier    String?
+  paymentType PaymentType
+  totalAmount Decimal     @db.Decimal(10, 2)
+
+  items PurchaseItem[]
+}
+
+model PurchaseItem {
+  id           String  @id @default(uuid())
+  purchaseId   String
+  ingredientId String
+  quantity     Float
+  unitPrice    Decimal @db.Decimal(10, 2)
+
+  purchase   KitchenPurchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  ingredient Ingredient      @relation(fields: [ingredientId], references: [id])
+}
