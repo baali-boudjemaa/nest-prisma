@@ -6,7 +6,7 @@ export class UpdateStudentDto extends PartialType(CreateStudentDto) {
     @IsOptional()
     @IsString()
     firstName?: string;
-
+    
     @IsOptional()
     @IsString()
     lastName?: string;

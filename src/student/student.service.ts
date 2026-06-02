@@ -11,43 +11,53 @@ import { StudentFilterDto } from '../common/dto/student-filter.dto';
 @Injectable()
 export class StudentService {
   constructor(private readonly prisma: PrismaService) { }
-
   async create(dto: CreateStudentDto) {
-    const count = await this.prisma.student.count();
-
-    const studentNumber = `ST${String(count + 1).padStart(4, '0')}`;
-
+    let studentNumber = '';
+    let retryCount = 0;
+    const maxRetries = 5;
+  
+    while (retryCount < maxRetries) {
+      const count = await this.prisma.student.count();
+      studentNumber = `ST${String(count + 1 + retryCount).padStart(4, '0')}`;
+  
+      const existing = await this.prisma.student.findUnique({
+        where: { studentNumber },
+        select: { id: true },
+      });
+  
+      if (!existing) break;
+      retryCount++;
+    }
+  
     return this.prisma.student.create({
       data: {
         studentNumber,
-
         firstName: dto.firstName,
         lastName: dto.lastName,
         dateOfBirth: new Date(dto.dateOfBirth),
-
         gender: dto.gender,
+        level: dto.level,
         medicalInfo: dto.medicalInfo,
-
-        guardians: dto.guardian
+        guardians: dto.guardians && dto.guardians.length > 0
           ? {
-            create: {
-          
-
-              guardian: {
-                create: {
-                  firstName: dto.guardian.firstName,
-                  lastName: dto.guardian.lastName,
-                  phoneNumber: dto.guardian.phoneNumber,
-                  email: dto.guardian.email,
-                  relation: dto.guardian.relation,
-                  address: dto.guardian.address,
+              create: dto.guardians.map((g) => ({
+                relationship: g.relationship,
+                isEmergency: g.isEmergency,
+                createdById: g.createdById,
+                guardian: {
+                  create: {
+                    firstName: g.guardian.firstName,
+                    lastName: g.guardian.lastName,
+                    phoneNumber: g.guardian.phoneNumber,
+                    email: g.guardian.email,
+                    address: g.guardian.address,
+                    relation: g.relationship,
+                  },
                 },
-              },
-            },
-          }
+              })),
+            }
           : undefined,
       },
-
       include: {
         guardians: {
           include: {
@@ -57,9 +67,8 @@ export class StudentService {
       },
     });
   }
-
-
-
+  
+  
   async findOne(id: string) {
     const student = await this.prisma.student.findUnique({
       where: { id },
@@ -82,7 +91,7 @@ export class StudentService {
         attendance: true,
         absences: true,
         dailyLogs: true,
-
+       
         milestones: {
           include: {
             milestone: true,
@@ -218,4 +227,5 @@ export class StudentService {
       totalPages: Math.ceil(total / limit),
     };
   }
+  
 }

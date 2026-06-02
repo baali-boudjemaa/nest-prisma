@@ -40,7 +40,7 @@ export class StudentController {
   @Roles('ADMIN')
   @Get()
   findAll() {
-    //return this.studentService.findAll(studentFilterDto);
+   return this.studentService.findAll({ page: 1, limit: 10, search: '' })
   }
 
   @Public()

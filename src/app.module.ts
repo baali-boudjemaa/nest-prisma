@@ -16,7 +16,6 @@ import { PrismaService } from './prisma/prisma.service';
 import { StudentMilestoneModule } from './student-milestone/student-milestone.module';
 import { StudentModule } from './student/student.module';
 import { UserModule } from './user/user.module';
-import { GuardiansModule } from './guardians/guardians.module';
 import { SchoolYearsModule } from './school-years/school-years.module';
 import { InscriptionsModule } from './inscriptions/inscriptions.module';
 import { AbsencesModule } from './absences/absences.module';
@@ -31,6 +30,7 @@ import { ExpensesModule } from './expenses/expenses.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { DocumentsModule } from './documents/document.module';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth/guards/auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
@@ -56,7 +56,6 @@ const ENV_FILE_PATH = process.env.ENV_FILE_PATH ?? ENV;
     AttendanceModule,
     DailyLogModule,
     StudentMilestoneModule,
-    GuardiansModule,
     SchoolYearsModule,
     InscriptionsModule,
     AbsencesModule,
@@ -71,6 +70,7 @@ const ENV_FILE_PATH = process.env.ENV_FILE_PATH ?? ENV;
     InventoryModule,
     DashboardModule,
     PrismaModule,
+    DocumentsModule,
   ],
   controllers: [AppController, OverviewController],
   providers: [AppService, PrismaService, OverviewService
@@ -82,6 +82,8 @@ const ENV_FILE_PATH = process.env.ENV_FILE_PATH ?? ENV;
       provide: APP_GUARD,
       useClass: RolesGuard,
     },
+
+    
   ],
 })
 export class AppModule { }

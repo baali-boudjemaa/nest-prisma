@@ -1,79 +1,86 @@
 import {
   IsBoolean,
   IsDateString,
+  IsEmail,
   IsEnum,
   IsOptional,
   IsString,
+  IsUUID, // 👈 ADD THIS LINE HERE
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { StudentLevel } from '@prisma/client';
+
 
 export enum Sexe {
   MALE = 'MALE',
   FEMALE = 'FEMALE',
 }
 
-export enum StudentLevel {
-  NURSERY = 'NURSERY',
-  PRIMARY = 'PRIMARY',
-  MIDDLE = 'MIDDLE',
-  SECONDARY = 'SECONDARY',
+export class GuardianInfoDto {
+  @IsString()
+  firstName: string;
+
+  @IsString()
+  lastName: string;
+
+  @IsString()
+  phoneNumber: string;
+
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  address: string;
 }
 
-export class CreateStudentGuardianDto {
+export class StudentGuardianDto {
   @IsString()
-  firstName!: string;
+  relationship: string;
 
-  @IsString()
-  lastName!: string;
-
-  @IsString()
-  phoneNumber!: string;
-
-  @IsString()
-  email!: string;
-
-  @IsString()
-  relation!: string;
-
-  @IsString()
-  address!: string;
+  @IsBoolean()
+  isEmergency: boolean;
 
   @IsOptional()
-  @IsBoolean()
-  isEmergencyContact?: boolean;
+  @IsString()
+  createdById?: string;
 
-  @IsOptional()
-  @IsBoolean()
-  isAuthorizedToPickUp?: boolean;
+  @ValidateNested()
+  @Type(() => GuardianInfoDto)
+  guardian: GuardianInfoDto;
 }
+
+
+// ... Keep GuardianInfoDto and StudentGuardianDto exactly as they are ...
 
 export class CreateStudentDto {
-  [x: string]: any;
+  @IsString()
+  firstName: string;
 
   @IsString()
-  firstName!: string;
-
-  @IsString()
-  lastName!: string;
+  lastName: string;
 
   @IsDateString()
-  dateOfBirth!: string;
+  dateOfBirth: string;
 
-  @IsOptional()
   @IsEnum(Sexe)
-  gender?: Sexe;
+  gender: Sexe;
 
   @IsOptional()
   @IsEnum(StudentLevel)
   level?: StudentLevel;
 
   @IsOptional()
-  @ValidateNested()
-  @Type(() => CreateStudentGuardianDto)
-  guardian?: CreateStudentGuardianDto;
-
-  @IsOptional()
   @IsString()
   medicalInfo?: string;
+
+  // 👇 1. Add classId to the whitelist
+  @IsUUID()
+  classId: string;
+
+
+  @IsOptional()
+  @ValidateNested({ each: true }) // Or keep as object if you used Solution 2 previously
+  @Type(() => StudentGuardianDto)
+  guardians?: StudentGuardianDto[]; 
 }

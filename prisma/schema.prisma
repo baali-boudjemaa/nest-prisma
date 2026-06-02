@@ -174,13 +174,12 @@ model Student {
   medicalInfo    String?
   enrollmentDate DateTime      @default(now())
 
-  guardians    StudentGuardian[]
-  inscriptions Inscription[]
-  attendance   Attendance[]
-  absences     Absence[]
-  dailyLogs    DailyLog[]
-  milestones   StudentMilestone[]
-
+  guardians        StudentGuardian[]
+  inscriptions     Inscription[]
+  attendance       Attendance[]
+  absences         Absence[]
+  dailyLogs        DailyLog[]
+  milestones       StudentMilestone[]
   enrollments      Enrollment[]
   courseAttendance CourseAttendance[]
   grades           Grade[]
@@ -190,9 +189,14 @@ model Student {
 }
 
 model StudentGuardian {
-  id         String @id @default(uuid())
+  id String @id @default(uuid())
+
   studentId  String
   guardianId String
+
+  relationship String?
+  isEmergency  Boolean @default(false)
+  createdById  String?
 
   student  Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   guardian Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
@@ -442,4 +446,65 @@ model PurchaseItem {
 
   purchase   KitchenPurchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
   ingredient Ingredient      @relation(fields: [ingredientId], references: [id])
+}
+
+enum StudentDocumentType {
+  PHOTO
+  BIRTH_CERTIFICATE
+  MEDICAL_CERTIFICATE
+  VACCINATION_CARD
+  ID_CARD
+  EMPLOYMENT_CONTRACT
+  DIPLOMA
+  REGISTRATION_FORM
+  OTHER
+}
+
+enum DocumentOwnerType {
+  STUDENT
+  GUARDIAN
+  EMPLOYEE
+}
+
+enum DocumentType {
+  PHOTO
+
+  BIRTH_CERTIFICATE
+
+  MEDICAL_CERTIFICATE
+
+  VACCINATION_CARD
+
+  ID_CARD
+
+  EMPLOYMENT_CONTRACT
+
+  DIPLOMA
+
+  REGISTRATION_FORM
+
+  OTHER
+}
+
+model Document {
+  id String @id @default(uuid())
+
+  ownerType DocumentOwnerType
+  ownerId   String
+
+  type DocumentType
+
+  fileName     String
+  originalName String
+
+  mimeType String
+  fileSize Int
+  filePath String
+
+  uploadedBy String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerType, ownerId])
 }
