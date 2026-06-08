@@ -211,15 +211,7 @@ model AnneeScolaire {
   inscriptions Inscription[]
 }
 
-model Classroom {
-  id       String  @id @default(uuid())
-  name     String
-  ageGroup String?
-  capacity Int
 
-  inscriptions Inscription[]
-  employees    EmployeeClassroom[]
-}
 
 model EmployeeClassroom {
   id         String  @id @default(uuid())
@@ -507,4 +499,20 @@ model Document {
   updatedAt DateTime @updatedAt
 
   @@index([ownerType, ownerId])
+}
+model Classroom {
+  id       String @id @default(uuid())
+
+  name     String
+  ageGroup String?
+  capacity Int
+
+  type ClassroomType
+
+  inscriptions Inscription[]
+}
+
+enum ClassroomType {
+  NURSERY
+  SCHOOL
 }
