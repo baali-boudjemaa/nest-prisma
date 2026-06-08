@@ -220,7 +220,6 @@ model EmployeeClassroom {
   isLead     Boolean @default(false)
 
   employee  Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  classroom Classroom @relation(fields: [classId], references: [id], onDelete: Cascade)
 
   @@unique([employeeId, classId])
 }
