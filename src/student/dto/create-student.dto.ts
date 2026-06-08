@@ -5,7 +5,8 @@ import {
   IsEnum,
   IsOptional,
   IsString,
-  IsUUID, // 👈 ADD THIS LINE HERE
+  IsUUID,
+  IsEmpty,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -35,6 +36,15 @@ export class GuardianInfoDto {
 }
 
 export class StudentGuardianDto {
+  @IsOptional()
+  @IsUUID()
+  guardianId?: string;
+
+  // Should not be provided by clients; used internally by the system.
+  @IsOptional()
+  @IsEmpty({ message: 'studentGuardianId should not be provided' })
+  studentGuardianId?: string;
+
   @IsString()
   relationship: string;
 
@@ -45,9 +55,10 @@ export class StudentGuardianDto {
   @IsString()
   createdById?: string;
 
+  @IsOptional()
   @ValidateNested()
   @Type(() => GuardianInfoDto)
-  guardian: GuardianInfoDto;
+  guardian?: GuardianInfoDto;
 }
 
 
@@ -74,13 +85,8 @@ export class CreateStudentDto {
   @IsString()
   medicalInfo?: string;
 
-  // 👇 1. Add classId to the whitelist
-  @IsUUID()
-  classId: string;
-
-
   @IsOptional()
   @ValidateNested({ each: true }) // Or keep as object if you used Solution 2 previously
   @Type(() => StudentGuardianDto)
-  guardians?: StudentGuardianDto[]; 
+  guardians?: StudentGuardianDto[];
 }

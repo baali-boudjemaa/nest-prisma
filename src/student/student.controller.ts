@@ -22,12 +22,12 @@ import { UserRole } from '../enums/UserRole';
 export class StudentController {
   constructor(private readonly studentService: StudentService) { }
 
-@UseGuards(AuthGuard, RolesGuard)
-@Roles(
-  UserRole.SUPER_ADMIN,
-  UserRole.ADMIN,
-  UserRole.RECEPTIONIST,
-)
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.ADMIN,
+    UserRole.RECEPTIONIST,
+  )
   @Post()
   create(@Body() createStudentDto: CreateStudentDto, @Req() req) {
     console.log('Received create student request with data:', createStudentDto);
@@ -40,7 +40,7 @@ export class StudentController {
   @Roles('ADMIN')
   @Get()
   findAll() {
-   return this.studentService.findAll({ page: 1, limit: 10, search: '' })
+    return this.studentService.findAll({ page: 1, limit: 10, search: '' })
   }
 
   @Public()
@@ -53,6 +53,24 @@ export class StudentController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateStudentDto: UpdateStudentDto) {
     return this.studentService.update(id, updateStudentDto);
+  }
+
+  @Public()
+  @Post(':id/guardian/:guardianId')
+  assignGuardian(
+    @Param('id') studentId: string,
+    @Param('guardianId') guardianId: string,
+  ) {
+    return this.studentService.assignExistingGuardian(studentId, guardianId);
+  }
+
+  @Public()
+  @Delete(':id/guardian/:guardianId')
+  removeGuardian(
+    @Param('id') studentId: string,
+    @Param('guardianId') guardianId: string,
+  ) {
+    return this.studentService.removeGuardian(studentId, guardianId);
   }
 
   @Public()
