@@ -7,7 +7,6 @@ import { AuthModule } from './auth/auth.module';
 import { ClassModule } from './classroom/class.module';
 import { DailyLogModule } from './daily-log/daily-log.module';
 import { GuardianModule } from './guardian/guardian.module';
-import { InscriptionModule } from './inscription/inscription.module';
 import { OverviewController } from './overview/overview.controller';
 import { OverviewModule } from './overview/overview.module';
 import { OverviewService } from './overview/overview.service';
@@ -17,7 +16,7 @@ import { StudentMilestoneModule } from './student-milestone/student-milestone.mo
 import { StudentModule } from './student/student.module';
 import { UserModule } from './user/user.module';
 import { SchoolYearsModule } from './school-years/school-years.module';
-import { InscriptionsModule } from './inscriptions/inscriptions.module';
+import { InscriptionModule } from './inscription/inscription.module';
 import { AbsencesModule } from './absences/absences.module';
 import { DailyLogsModule } from './daily-logs/daily-logs.module';
 import { MilestonesModule } from './milestones/milestones.module';
@@ -57,7 +56,6 @@ const ENV_FILE_PATH = process.env.ENV_FILE_PATH ?? ENV;
     DailyLogModule,
     StudentMilestoneModule,
     SchoolYearsModule,
-    InscriptionsModule,
     AbsencesModule,
     DailyLogsModule,
     MilestonesModule,
@@ -74,7 +72,7 @@ const ENV_FILE_PATH = process.env.ENV_FILE_PATH ?? ENV;
   ],
   controllers: [AppController, OverviewController],
   providers: [AppService, PrismaService, OverviewService
-    ,{
+    , {
       provide: APP_GUARD,
       useClass: AuthGuard,
     },
@@ -83,7 +81,7 @@ const ENV_FILE_PATH = process.env.ENV_FILE_PATH ?? ENV;
       useClass: RolesGuard,
     },
 
-    
+
   ],
 })
 export class AppModule { }

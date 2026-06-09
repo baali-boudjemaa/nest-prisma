@@ -1,8 +1,14 @@
 import {
+  IsEnum,
   IsInt,
   IsOptional,
   IsString,
 } from 'class-validator';
+
+export enum ClassroomType {
+  NURSERY = 'NURSERY',
+  SCHOOL = 'SCHOOL',
+}
 
 export class CreateClassroomDto {
   @IsString()
@@ -14,4 +20,7 @@ export class CreateClassroomDto {
 
   @IsInt()
   capacity: number;
+
+  @IsEnum(ClassroomType)
+  type: ClassroomType;
 }

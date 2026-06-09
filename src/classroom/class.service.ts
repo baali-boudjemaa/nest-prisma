@@ -13,6 +13,7 @@ export class ClassService {
       name: createClassroomDto.name,
       ageGroup: createClassroomDto.ageGroup ?? undefined,
       capacity: createClassroomDto.capacity,
+      type: createClassroomDto.type,
     };
 
     return this.prisma.classroom.create({
@@ -23,11 +24,7 @@ export class ClassService {
   findAll() {
     return this.prisma.classroom.findMany({
       include: {
-        employees: {
-          include: {
-            employee: true,
-          },
-        },
+
         inscriptions: true,
       },
     });
@@ -37,11 +34,6 @@ export class ClassService {
     const classroom = await this.prisma.classroom.findUnique({
       where: { id },
       include: {
-        employees: {
-          include: {
-            employee: true,
-          },
-        },
         inscriptions: true,
       },
     });
@@ -62,6 +54,7 @@ export class ClassService {
         name: updateClassroomDto.name,
         ageGroup: updateClassroomDto.ageGroup,
         capacity: updateClassroomDto.capacity,
+        type: updateClassroomDto.type,
       },
     });
   }

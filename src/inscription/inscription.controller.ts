@@ -19,16 +19,16 @@ export class InscriptionController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.inscriptionService.findOne(+id);
+    return this.inscriptionService.findOne(id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateInscriptionDto: UpdateInscriptionDto) {
-    return this.inscriptionService.update(+id, updateInscriptionDto);
+    return this.inscriptionService.update(id, updateInscriptionDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.inscriptionService.remove(+id);
+    return this.inscriptionService.remove(id);
   }
 }

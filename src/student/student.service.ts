@@ -398,6 +398,13 @@ export class StudentService {
         orderBy: {
           createdAt: 'desc',
         },
+        include: {
+          guardians: {
+            include: {
+              guardian: true,
+            },
+          },
+        },
       }),
       this.prisma.student.count({
         where,
