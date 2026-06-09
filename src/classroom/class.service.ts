@@ -1,37 +1,69 @@
-import { Injectable } from '@nestjs/common';
-import { CreateClassDto } from './dto/create-class.dto';
-import { UpdateClassDto } from './dto/update-class.dto';
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateClassroomDto } from './dto/create-class.dto';
+import { UpdateClassroomDto } from './dto/update-class.dto';
 
 @Injectable()
 export class ClassService {
   constructor(private readonly prisma: PrismaService) { }
 
-  create(createClassDto: CreateClassDto) {
+  async create(createClassroomDto: CreateClassroomDto) {
+    const classroomData = {
+      name: createClassroomDto.name,
+      ageGroup: createClassroomDto.ageGroup ?? undefined,
+      capacity: createClassroomDto.capacity,
+      type: createClassroomDto.type,
+    };
+
     return this.prisma.classroom.create({
-      data: {
-        name: createClassDto.name,
-        ageGroup: createClassDto.ageGroup,
-        roomNumber: createClassDto.roomNumber,
-        maxCapacity: createClassDto.maxCapacity,
-        leadTeacherId: createClassDto.leadTeacherId,
-      },
+      data: classroomData,
     });
   }
 
   findAll() {
-    return `This action returns all class`;
+    return this.prisma.classroom.findMany({
+      include: {
+
+        inscriptions: true,
+      },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} class`;
+  async findOne(id: string) {
+    const classroom = await this.prisma.classroom.findUnique({
+      where: { id },
+      include: {
+        inscriptions: true,
+      },
+    });
+
+    if (!classroom) {
+      throw new NotFoundException(`Classroom with id ${id} not found`);
+    }
+
+    return classroom;
   }
 
-  update(id: number, updateClassDto: UpdateClassDto) {
-    return `This action updates a #${id} class`;
+  async update(id: string, updateClassroomDto: UpdateClassroomDto) {
+    await this.findOne(id);
+
+    return this.prisma.classroom.update({
+      where: { id },
+      data: {
+        name: updateClassroomDto.name,
+        ageGroup: updateClassroomDto.ageGroup,
+        capacity: updateClassroomDto.capacity,
+        type: updateClassroomDto.type,
+      },
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} class`;
+  async remove(id: string) {
+    await this.findOne(id);
+
+    return this.prisma.classroom.delete({
+      where: { id },
+    });
   }
 }

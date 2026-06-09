@@ -1,24 +1,26 @@
-import { IsString, IsNotEmpty, IsOptional, IsInt, Min, IsUUID } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
-export class CreateClassDto {
+export enum ClassroomType {
+  NURSERY = 'NURSERY',
+  SCHOOL = 'SCHOOL',
+}
+
+export class CreateClassroomDto {
   @IsString()
-  @IsNotEmpty()
   name: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   ageGroup?: string;
 
-  @IsString()
-  @IsOptional()
-  roomNumber?: string;
-
   @IsInt()
-  @Min(1)
-  @IsOptional()
-  maxCapacity?: number;
+  capacity: number;
 
-  @IsUUID() // Assuming Teacher ID is a UUID
-  @IsOptional()
-  leadTeacherId?: string;
+  @IsEnum(ClassroomType)
+  type: ClassroomType;
 }

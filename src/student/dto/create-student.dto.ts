@@ -1,31 +1,92 @@
-import { IsEmail, MinLength, IsNotEmpty, ValidateNested } from 'class-validator';
+import {
+  IsBoolean,
+  IsDateString,
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUUID,
+  IsEmpty,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
-import { CreateGuardianStudentDto } from './create-guardian-student.dto';
+import { StudentLevel } from '@prisma/client';
 
-export class CreateStudentDto {
-  @IsNotEmpty()
+
+export enum Sexe {
+  MALE = 'MALE',
+  FEMALE = 'FEMALE',
+}
+
+export class GuardianInfoDto {
+  @IsString()
   firstName: string;
 
-  @IsNotEmpty()
+  @IsString()
   lastName: string;
 
-  @IsNotEmpty()
-  dateOfBirth: Date;
+  @IsString()
+  phoneNumber: string;
 
-  @IsNotEmpty()
-  gender: string;
+  @IsEmail()
+  email: string;
 
-  @IsNotEmpty()
-  medicalInfo: string;
+  @IsString()
+  address: string;
+}
 
-  @IsNotEmpty()
-  enrollmentDate: Date;
+export class StudentGuardianDto {
+  @IsOptional()
+  @IsUUID()
+  guardianId?: string;
 
-  @IsNotEmpty()
-  classId : string;
+  // Should not be provided by clients; used internally by the system.
+  @IsOptional()
+  @IsEmpty({ message: 'studentGuardianId should not be provided' })
+  studentGuardianId?: string;
 
+  @IsString()
+  relationship: string;
+
+  @IsBoolean()
+  isEmergency: boolean;
+
+  @IsOptional()
+  @IsString()
+  createdById?: string;
+
+  @IsOptional()
   @ValidateNested()
-  @Type(() => CreateGuardianStudentDto)
-  @IsNotEmpty()
-  guardians: CreateGuardianStudentDto;
+  @Type(() => GuardianInfoDto)
+  guardian?: GuardianInfoDto;
+}
+
+
+// ... Keep GuardianInfoDto and StudentGuardianDto exactly as they are ...
+
+export class CreateStudentDto {
+  @IsString()
+  firstName: string;
+
+  @IsString()
+  lastName: string;
+
+  @IsDateString()
+  dateOfBirth: string;
+
+  @IsEnum(Sexe)
+  gender: Sexe;
+
+  @IsOptional()
+  @IsEnum(StudentLevel)
+  level?: StudentLevel;
+
+  @IsOptional()
+  @IsString()
+  medicalInfo?: string;
+
+  @IsOptional()
+  @ValidateNested({ each: true }) // Or keep as object if you used Solution 2 previously
+  @Type(() => StudentGuardianDto)
+  guardians?: StudentGuardianDto[];
 }

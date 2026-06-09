@@ -1,20 +1,26 @@
-import {} from '@nestjs/common';
-import { IsEmail, IsNotEmpty } from 'class-validator';  
+import {
+  IsEmail,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateGuardianDto {
-  @IsNotEmpty()
+  @IsString()
   firstName: string;
 
-  @IsNotEmpty()
+  @IsString()
   lastName: string;
 
-  @IsEmail()
-  @IsNotEmpty()
-  email: string;
-
-  @IsNotEmpty()
+  @IsString()
   phoneNumber: string;
 
-  @IsNotEmpty()
-  address :string;
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  relation: string;
+
+  @IsOptional()
+  @IsString()
+  address?: string;
 }
